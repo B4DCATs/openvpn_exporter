@@ -26,7 +26,7 @@ run:
 	python openvpn_exporter.py --openvpn.status_paths examples/client.status,examples/server2.status,examples/server3.status
 
 test:
-	pytest tests/ -v
+	python -m pytest tests/ -v
 
 lint:
 	flake8 openvpn_exporter.py
