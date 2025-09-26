@@ -628,19 +628,19 @@ def main():
     logging.getLogger().setLevel(getattr(logging, args.log_level))
     
     # Parse status paths
-    status_paths = [path.strip() for path in args.openvpn.status_paths.split(',')]
+    status_paths = [path.strip() for path in getattr(args, 'openvpn.status_paths').split(',')]
     
     logger.info("Starting OpenVPN Exporter v2.0",
-                listen_address=args.web.listen_address,
-                metrics_path=args.web.telemetry_path,
+                listen_address=getattr(args, 'web.listen_address'),
+                metrics_path=getattr(args, 'web.telemetry_path'),
                 status_paths=status_paths,
-                ignore_individuals=args.ignore_individuals)
+                ignore_individuals=getattr(args, 'ignore.individuals'))
     
     # Create Flask app
-    app = create_app(status_paths, args.ignore_individuals)
+    app = create_app(status_paths, getattr(args, 'ignore.individuals'))
     
     # Start server
-    host, port = args.web.listen_address.split(':')
+    host, port = getattr(args, 'web.listen_address').split(':')
     if not host:
         host = '0.0.0.0'
     
