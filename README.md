@@ -21,6 +21,16 @@ This repository provides a secure Prometheus metrics exporter for [OpenVPN](http
 - **Memory Efficiency**: Optimized memory usage
 - **Multi-stage Docker Build**: Smaller, more secure container images
 
+## 🚀 Quick Start
+
+**Хотите запустить за 30 секунд?** Смотрите [QUICKSTART.md](QUICKSTART.md)
+
+```bash
+git clone https://github.com/your-org/openvpn_exporter.git
+cd openvpn_exporter
+./run.sh
+```
+
 ## 📋 Supported OpenVPN Status Formats
 
 The exporter supports all OpenVPN status file formats:

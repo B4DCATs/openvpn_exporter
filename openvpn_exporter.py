@@ -605,16 +605,21 @@ def create_app(status_paths: List[str], ignore_individuals: bool = False) -> Fla
 def main():
     """Main function"""
     parser = argparse.ArgumentParser(description='OpenVPN Prometheus Exporter v2.0')
-    parser.add_argument('--web.listen-address', default=':9176', 
+    parser.add_argument('--web.listen-address', 
+                       default=os.environ.get('LISTEN_ADDRESS', ':9176'),
                        help='Address to listen on for web interface and telemetry')
-    parser.add_argument('--web.telemetry-path', default='/metrics',
+    parser.add_argument('--web.telemetry-path', 
+                       default=os.environ.get('TELEMETRY_PATH', '/metrics'),
                        help='Path under which to expose metrics')
     parser.add_argument('--openvpn.status_paths', 
-                       default='examples/client.status,examples/server2.status,examples/server3.status',
+                       default=os.environ.get('STATUS_PATHS', 'examples/client.status,examples/server2.status,examples/server3.status'),
                        help='Paths at which OpenVPN places its status files')
-    parser.add_argument('--ignore.individuals', action='store_true',
+    parser.add_argument('--ignore.individuals', 
+                       action='store_true',
+                       default=os.environ.get('IGNORE_INDIVIDUALS', 'false').lower() == 'true',
                        help='If ignoring metrics for individuals')
-    parser.add_argument('--log-level', default='INFO',
+    parser.add_argument('--log-level', 
+                       default=os.environ.get('LOG_LEVEL', 'INFO'),
                        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
                        help='Log level')
     

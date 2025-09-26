@@ -13,14 +13,13 @@ services:
       # Optional: Mount custom status files
       - ./examples:/app/examples:ro
     environment:
+      - LISTEN_ADDRESS=${LISTEN_ADDRESS:-:9176}
+      - TELEMETRY_PATH=${TELEMETRY_PATH:-/metrics}
+      - STATUS_PATHS=${STATUS_PATHS:-/var/log/openvpn/server.status,/var/log/openvpn/client.status}
+      - IGNORE_INDIVIDUALS=${IGNORE_INDIVIDUALS:-false}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - RATE_LIMIT_WINDOW=${RATE_LIMIT_WINDOW:-60}
       - MAX_REQUESTS_PER_WINDOW=${MAX_REQUESTS_PER_WINDOW:-100}
-    command: >
-      --openvpn.status_paths /var/log/openvpn/server.status,/var/log/openvpn/client.status
-      --web.listen-address :9176
-      --ignore.individuals
-      --log-level INFO
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:9176/health')"]
