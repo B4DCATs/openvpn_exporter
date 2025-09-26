@@ -1,9 +1,9 @@
 version: '3.8'
 
 services:
-  openvpn-exporter:
-    image: ghcr.io/b4dcats/openvpn_exporter:latest
-    container_name: openvpn-exporter
+  openvpn-exporter-dev:
+    build: .
+    container_name: openvpn-exporter-dev
     ports:
       - "9176:9176"
     volumes:
@@ -12,12 +12,14 @@ services:
       - /etc/openvpn:/etc/openvpn:ro
       # Optional: Mount custom status files
       - ./examples:/app/examples:ro
+      # Mount source code for development
+      - ./openvpn_exporter.py:/app/openvpn_exporter.py:ro
     environment:
       - LISTEN_ADDRESS=${LISTEN_ADDRESS:-:9176}
       - TELEMETRY_PATH=${TELEMETRY_PATH:-/metrics}
       - STATUS_PATHS=${STATUS_PATHS:-/var/log/openvpn/server.status,/var/log/openvpn/client.status}
       - IGNORE_INDIVIDUALS=${IGNORE_INDIVIDUALS:-false}
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_LEVEL=${LOG_LEVEL:-DEBUG}
       - RATE_LIMIT_WINDOW=${RATE_LIMIT_WINDOW:-60}
       - MAX_REQUESTS_PER_WINDOW=${MAX_REQUESTS_PER_WINDOW:-100}
     restart: unless-stopped
@@ -29,7 +31,6 @@ services:
       start_period: 10s
     networks:
       - monitoring
-
 
 networks:
   monitoring:
