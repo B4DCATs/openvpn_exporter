@@ -69,4 +69,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import requests; requests.get('http://localhost:9176/health')" || exit 1
 
 # Run the application
-CMD ["python", "openvpn_exporter.py"]
+ENTRYPOINT ["python", "openvpn_exporter.py"]
+CMD []

@@ -26,7 +26,7 @@ This repository provides a secure Prometheus metrics exporter for [OpenVPN](http
 **Хотите запустить за 30 секунд?** Смотрите [QUICKSTART.md](QUICKSTART.md)
 
 ```bash
-git clone https://github.com/your-org/openvpn_exporter.git
+git clone https://github.com/B4DCATs/openvpn_exporter.git
 cd openvpn_exporter
 ./run.sh
 ```

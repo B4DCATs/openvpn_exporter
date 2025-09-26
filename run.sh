@@ -50,6 +50,9 @@ docker run -d \
     -v /etc/openvpn:/etc/openvpn:ro \
     -e STATUS_PATHS="/var/log/openvpn/server.status,/var/log/openvpn/client.status" \
     -e LOG_LEVEL="INFO" \
+    -e LISTEN_ADDRESS=":9176" \
+    -e TELEMETRY_PATH="/metrics" \
+    -e IGNORE_INDIVIDUALS="false" \
     "${IMAGE_NAME}:${IMAGE_TAG}"
 
 # Wait for container to start

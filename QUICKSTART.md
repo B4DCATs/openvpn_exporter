@@ -4,7 +4,7 @@
 
 ### 1. Клонируйте репозиторий
 ```bash
-git clone https://github.com/your-org/openvpn_exporter.git
+git clone https://github.com/B4DCATs/openvpn_exporter.git
 cd openvpn_exporter
 ```
 
