@@ -18,8 +18,8 @@ WORKDIR /app
 # Copy requirements first for better caching
 COPY requirements.txt .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Python dependencies (force wheels to avoid compilation)
+RUN pip install --no-cache-dir --only-binary=all -r requirements.txt
 
 # Production stage
 FROM python:3.11-slim as production
