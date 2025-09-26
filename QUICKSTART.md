@@ -15,6 +15,21 @@ cd openvpn_exporter
 
 **Всё!** Экспортер запущен и готов к работе.
 
+## Или используйте готовый образ
+
+Если не хотите собирать образ самостоятельно:
+
+```bash
+# Просто запустите готовый образ
+docker run -d \
+  --name openvpn-exporter \
+  -p 9176:9176 \
+  -v /var/log/openvpn:/var/log/openvpn:ro \
+  -v /etc/openvpn:/etc/openvpn:ro \
+  -e STATUS_PATHS="/var/log/openvpn/server.status" \
+  ghcr.io/b4dcats/openvpn_exporter:latest
+```
+
 ## Что происходит автоматически
 
 - ✅ Собирается Docker образ

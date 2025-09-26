@@ -4,8 +4,8 @@
 set -e
 
 # Default values
-IMAGE_NAME="openvpn-exporter"
-IMAGE_TAG="v2.0"
+IMAGE_NAME="ghcr.io/b4dcats/openvpn_exporter"
+IMAGE_TAG="latest"
 CONTAINER_NAME="openvpn-exporter"
 PORT="9176"
 
@@ -24,10 +24,10 @@ if ! docker info > /dev/null 2>&1; then
     exit 1
 fi
 
-# Build image if it doesn't exist
+# Pull image if it doesn't exist locally
 if ! docker image inspect "${IMAGE_NAME}:${IMAGE_TAG}" > /dev/null 2>&1; then
-    echo -e "${YELLOW}Building Docker image...${NC}"
-    docker build -t "${IMAGE_NAME}:${IMAGE_TAG}" .
+    echo -e "${YELLOW}Pulling Docker image...${NC}"
+    docker pull "${IMAGE_NAME}:${IMAGE_TAG}"
 fi
 
 # Stop and remove existing container if it exists

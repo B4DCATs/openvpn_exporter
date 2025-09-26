@@ -94,14 +94,37 @@ E.g:
 openvpn_exporter -openvpn.status_paths /etc/openvpn/openvpn-status.log
 ```
 
-## Docker
+## 🐳 Docker
 
-To use with docker you must mount your status file to `/etc/openvpn_exporter/server.status`.
+### Pre-built Image (Recommended)
 
-```sh
-docker run -p 9176:9176 \
-  -v /path/to/openvpn_server.status:/etc/openvpn_exporter/server.status \
-  kumina/openvpn-exporter -openvpn.status_paths /etc/openvpn_exporter/server.status
+Use the pre-built image from GitHub Container Registry:
+
+```bash
+docker run -d \
+  --name openvpn-exporter \
+  -p 9176:9176 \
+  -v /var/log/openvpn:/var/log/openvpn:ro \
+  -v /etc/openvpn:/etc/openvpn:ro \
+  -e STATUS_PATHS="/var/log/openvpn/server.status" \
+  ghcr.io/b4dcats/openvpn_exporter:latest
+```
+
+### Build from Source
+
+```bash
+# Clone and build
+git clone https://github.com/B4DCATs/openvpn_exporter.git
+cd openvpn_exporter
+docker build -t openvpn-exporter:v2.0 .
+
+# Run
+docker run -d \
+  --name openvpn-exporter \
+  -p 9176:9176 \
+  -v /var/log/openvpn:/var/log/openvpn:ro \
+  -e STATUS_PATHS="/var/log/openvpn/server.status" \
+  openvpn-exporter:v2.0
 ```
 
 Metrics should be available at http://localhost:9176/metrics.
