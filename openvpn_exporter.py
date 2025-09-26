@@ -538,7 +538,6 @@ class OpenVPNExporter:
 def create_app(status_paths: List[str], ignore_individuals: bool = False) -> Flask:
     """Create Flask application with security enhancements"""
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change-me-in-production')
     
     # Initialize exporter
     exporter = OpenVPNExporter(status_paths, ignore_individuals)

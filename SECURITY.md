@@ -56,9 +56,6 @@ iptables -A INPUT -p tcp --dport 9176 -j DROP
 
 ### 3. Environment Variables
 ```bash
-# Set secure secret key
-export SECRET_KEY="$(openssl rand -base64 32)"
-
 # Configure rate limiting
 export RATE_LIMIT_WINDOW=60
 export MAX_REQUESTS_PER_WINDOW=50
@@ -88,7 +85,6 @@ If you discover a security vulnerability, please follow these steps:
 ## Security Checklist
 
 ### Before Deployment
-- [ ] Change default SECRET_KEY
 - [ ] Configure proper file permissions
 - [ ] Set up firewall rules
 - [ ] Enable rate limiting
@@ -148,7 +144,6 @@ tail -f /var/log/openvpn-exporter.log | grep -E "(ERROR|WARNING|Rate limit)"
 services:
   openvpn-exporter:
     environment:
-      - SECRET_KEY=${SECRET_KEY}
       - LOG_LEVEL=WARNING
       - RATE_LIMIT_WINDOW=60
       - MAX_REQUESTS_PER_WINDOW=50

@@ -87,7 +87,6 @@ docker run -d \
   -p 9176:9176 \
   -v /var/log/openvpn:/var/log/openvpn:ro \
   -v /etc/openvpn:/etc/openvpn:ro \
-  -e SECRET_KEY="$(openssl rand -base64 32)" \
   -e LOG_LEVEL=INFO \
   openvpn-exporter:v2.0 \
   --openvpn.status_paths /var/log/openvpn/server.status,/var/log/openvpn/client.status
@@ -134,7 +133,6 @@ ProtectHome=true
 ReadWritePaths=/opt/openvpn-exporter
 
 # Environment
-Environment=SECRET_KEY=your-secret-key-here
 Environment=LOG_LEVEL=INFO
 
 [Install]
@@ -218,11 +216,8 @@ spec:
         ports:
         - containerPort: 9176
         env:
-        - name: SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: openvpn-exporter-secrets
-              key: secret-key
+        - name: LOG_LEVEL
+          value: "INFO"
         volumeMounts:
         - name: openvpn-logs
           mountPath: /var/log/openvpn

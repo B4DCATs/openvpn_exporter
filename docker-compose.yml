@@ -13,7 +13,6 @@ services:
       # Optional: Mount custom status files
       - ./examples:/app/examples:ro
     environment:
-      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - RATE_LIMIT_WINDOW=${RATE_LIMIT_WINDOW:-60}
       - MAX_REQUESTS_PER_WINDOW=${MAX_REQUESTS_PER_WINDOW:-100}
