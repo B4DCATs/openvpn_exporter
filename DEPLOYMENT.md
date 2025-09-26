@@ -448,7 +448,6 @@ spec:
 # Backup configuration files
 tar -czf openvpn-exporter-backup.tar.gz \
   docker-compose.yml \
-  prometheus.yml \
   .env
 ```
 
