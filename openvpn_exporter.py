@@ -202,43 +202,43 @@ class OpenVPNStatusParser:
         self.openvpn_up = Gauge(
             'openvpn_up',
             'Whether scraping OpenVPN metrics was successful',
-            ['status_path'],
+            ['status_path', 'job'],
             registry=self.registry
         )
         
         self.openvpn_status_update_time = Gauge(
             'openvpn_status_update_time_seconds',
             'UNIX timestamp at which OpenVPN statistics were updated',
-            ['status_path'],
+            ['status_path', 'job'],
             registry=self.registry
         )
         
         # Server metrics
         self.openvpn_connected_clients = Gauge(
-            'openvpn_server_connected_clients',
+            'openvpn_openvpn_server_connected_clients',
             'Number of connected clients',
-            ['status_path'],
+            ['status_path', 'job'],
             registry=self.registry
         )
         
         self.openvpn_client_received_bytes = Counter(
             'openvpn_server_client_received_bytes_total',
             'Amount of data received over a connection on the VPN server, in bytes',
-            ['status_path', 'common_name', 'real_address', 'virtual_address', 'username'],
+            ['status_path', 'common_name', 'real_address', 'virtual_address', 'username', 'job'],
             registry=self.registry
         )
         
         self.openvpn_client_sent_bytes = Counter(
             'openvpn_server_client_sent_bytes_total',
             'Amount of data sent over a connection on the VPN server, in bytes',
-            ['status_path', 'common_name', 'real_address', 'virtual_address', 'username'],
+            ['status_path', 'common_name', 'real_address', 'virtual_address', 'username', 'job'],
             registry=self.registry
         )
         
         self.openvpn_route_last_reference_time = Gauge(
             'openvpn_server_route_last_reference_time_seconds',
             'Time at which a route was last referenced, in seconds',
-            ['status_path', 'common_name', 'real_address', 'virtual_address'],
+            ['status_path', 'common_name', 'real_address', 'virtual_address', 'job'],
             registry=self.registry
         )
         
@@ -246,63 +246,63 @@ class OpenVPNStatusParser:
         self.openvpn_client_tun_tap_read_bytes = Counter(
             'openvpn_client_tun_tap_read_bytes_total',
             'Total amount of TUN/TAP traffic read, in bytes',
-            ['status_path'],
+            ['status_path', 'job'],
             registry=self.registry
         )
         
         self.openvpn_client_tun_tap_write_bytes = Counter(
             'openvpn_client_tun_tap_write_bytes_total',
             'Total amount of TUN/TAP traffic written, in bytes',
-            ['status_path'],
+            ['status_path', 'job'],
             registry=self.registry
         )
         
         self.openvpn_client_tcp_udp_read_bytes = Counter(
             'openvpn_client_tcp_udp_read_bytes_total',
             'Total amount of TCP/UDP traffic read, in bytes',
-            ['status_path'],
+            ['status_path', 'job'],
             registry=self.registry
         )
         
         self.openvpn_client_tcp_udp_write_bytes = Counter(
             'openvpn_client_tcp_udp_write_bytes_total',
             'Total amount of TCP/UDP traffic written, in bytes',
-            ['status_path'],
+            ['status_path', 'job'],
             registry=self.registry
         )
         
         self.openvpn_client_auth_read_bytes = Counter(
             'openvpn_client_auth_read_bytes_total',
             'Total amount of authentication traffic read, in bytes',
-            ['status_path'],
+            ['status_path', 'job'],
             registry=self.registry
         )
         
         self.openvpn_client_pre_compress_bytes = Counter(
             'openvpn_client_pre_compress_bytes_total',
             'Total amount of data before compression, in bytes',
-            ['status_path'],
+            ['status_path', 'job'],
             registry=self.registry
         )
         
         self.openvpn_client_post_compress_bytes = Counter(
             'openvpn_client_post_compress_bytes_total',
             'Total amount of data after compression, in bytes',
-            ['status_path'],
+            ['status_path', 'job'],
             registry=self.registry
         )
         
         self.openvpn_client_pre_decompress_bytes = Counter(
             'openvpn_client_pre_decompress_bytes_total',
             'Total amount of data before decompression, in bytes',
-            ['status_path'],
+            ['status_path', 'job'],
             registry=self.registry
         )
         
         self.openvpn_client_post_decompress_bytes = Counter(
             'openvpn_client_post_decompress_bytes_total',
             'Total amount of data after decompression, in bytes',
-            ['status_path'],
+            ['status_path', 'job'],
             registry=self.registry
         )
     
@@ -366,7 +366,7 @@ class OpenVPNStatusParser:
             if fields[0] == 'TIME' and len(fields) >= 3:
                 try:
                     timestamp = float(fields[2])
-                    self.openvpn_status_update_time.labels(status_path=status_path).set(timestamp)
+                    self.openvpn_status_update_time.labels(status_path=status_path, job="openvpn-metrics").set(timestamp)
                 except ValueError:
                     logger.warning("Invalid timestamp", path=status_path, timestamp=fields[2])
             
@@ -392,7 +392,8 @@ class OpenVPNStatusParser:
                             common_name=common_name,
                             real_address=real_address,
                             virtual_address=virtual_address,
-                            username=username
+                            username=username,
+                            job="openvpn-metrics"
                         ).inc(received_bytes)
                         
                         self.openvpn_client_sent_bytes.labels(
@@ -400,7 +401,8 @@ class OpenVPNStatusParser:
                             common_name=common_name,
                             real_address=real_address,
                             virtual_address=virtual_address,
-                            username=username
+                            username=username,
+                            job="openvpn-metrics"
                         ).inc(sent_bytes)
                     except (ValueError, IndexError) as e:
                         logger.warning("Error parsing client data", error=str(e))
@@ -417,13 +419,14 @@ class OpenVPNStatusParser:
                             status_path=status_path,
                             common_name=common_name,
                             real_address=real_address,
-                            virtual_address=virtual_address
+                            virtual_address=virtual_address,
+                            job="openvpn-metrics"
                         ).set(last_ref_time)
                     except (ValueError, IndexError) as e:
                         logger.warning("Error parsing routing data", error=str(e))
         
         # Set connected clients count
-        self.openvpn_connected_clients.labels(status_path=status_path).set(connected_clients)
+        self.openvpn_connected_clients.labels(status_path=status_path, job="openvpn-metrics").set(connected_clients)
         
         return {"connected_clients": connected_clients}
     
@@ -441,70 +444,70 @@ class OpenVPNStatusParser:
                     time_str = fields[1].strip()
                     time_obj = datetime.strptime(time_str, "%a %b %d %H:%M:%S %Y")
                     timestamp = time_obj.replace(tzinfo=timezone.utc).timestamp()
-                    self.openvpn_status_update_time.labels(status_path=status_path).set(timestamp)
+                    self.openvpn_status_update_time.labels(status_path=status_path, job="openvpn-metrics").set(timestamp)
                 except ValueError as e:
                     logger.warning("Error parsing timestamp", error=str(e))
             
             elif fields[0] == 'TUN/TAP read bytes' and len(fields) >= 2:
                 try:
                     value = float(fields[1])
-                    self.openvpn_client_tun_tap_read_bytes.labels(status_path=status_path).inc(value)
+                    self.openvpn_client_tun_tap_read_bytes.labels(status_path=status_path, job="openvpn-metrics").inc(value)
                 except ValueError:
                     pass
             
             elif fields[0] == 'TUN/TAP write bytes' and len(fields) >= 2:
                 try:
                     value = float(fields[1])
-                    self.openvpn_client_tun_tap_write_bytes.labels(status_path=status_path).inc(value)
+                    self.openvpn_client_tun_tap_write_bytes.labels(status_path=status_path, job="openvpn-metrics").inc(value)
                 except ValueError:
                     pass
             
             elif fields[0] == 'TCP/UDP read bytes' and len(fields) >= 2:
                 try:
                     value = float(fields[1])
-                    self.openvpn_client_tcp_udp_read_bytes.labels(status_path=status_path).inc(value)
+                    self.openvpn_client_tcp_udp_read_bytes.labels(status_path=status_path, job="openvpn-metrics").inc(value)
                 except ValueError:
                     pass
             
             elif fields[0] == 'TCP/UDP write bytes' and len(fields) >= 2:
                 try:
                     value = float(fields[1])
-                    self.openvpn_client_tcp_udp_write_bytes.labels(status_path=status_path).inc(value)
+                    self.openvpn_client_tcp_udp_write_bytes.labels(status_path=status_path, job="openvpn-metrics").inc(value)
                 except ValueError:
                     pass
             
             elif fields[0] == 'Auth read bytes' and len(fields) >= 2:
                 try:
                     value = float(fields[1])
-                    self.openvpn_client_auth_read_bytes.labels(status_path=status_path).inc(value)
+                    self.openvpn_client_auth_read_bytes.labels(status_path=status_path, job="openvpn-metrics").inc(value)
                 except ValueError:
                     pass
             
             elif fields[0] == 'pre-compress bytes' and len(fields) >= 2:
                 try:
                     value = float(fields[1])
-                    self.openvpn_client_pre_compress_bytes.labels(status_path=status_path).inc(value)
+                    self.openvpn_client_pre_compress_bytes.labels(status_path=status_path, job="openvpn-metrics").inc(value)
                 except ValueError:
                     pass
             
             elif fields[0] == 'post-compress bytes' and len(fields) >= 2:
                 try:
                     value = float(fields[1])
-                    self.openvpn_client_post_compress_bytes.labels(status_path=status_path).inc(value)
+                    self.openvpn_client_post_compress_bytes.labels(status_path=status_path, job="openvpn-metrics").inc(value)
                 except ValueError:
                     pass
             
             elif fields[0] == 'pre-decompress bytes' and len(fields) >= 2:
                 try:
                     value = float(fields[1])
-                    self.openvpn_client_pre_decompress_bytes.labels(status_path=status_path).inc(value)
+                    self.openvpn_client_pre_decompress_bytes.labels(status_path=status_path, job="openvpn-metrics").inc(value)
                 except ValueError:
                     pass
             
             elif fields[0] == 'post-decompress bytes' and len(fields) >= 2:
                 try:
                     value = float(fields[1])
-                    self.openvpn_client_post_decompress_bytes.labels(status_path=status_path).inc(value)
+                    self.openvpn_client_post_decompress_bytes.labels(status_path=status_path, job="openvpn-metrics").inc(value)
                 except ValueError:
                     pass
         
@@ -524,10 +527,10 @@ class OpenVPNExporter:
         for status_path in self.status_paths:
             try:
                 self.parser.parse_status_file(status_path)
-                self.parser.openvpn_up.labels(status_path=status_path).set(1)
+                self.parser.openvpn_up.labels(status_path=status_path, job="openvpn-metrics").set(1)
             except Exception as e:
                 logger.error("Failed to collect metrics", path=status_path, error=str(e))
-                self.parser.openvpn_up.labels(status_path=status_path).set(0)
+                self.parser.openvpn_up.labels(status_path=status_path, job="openvpn-metrics").set(0)
     
     def get_metrics(self) -> str:
         """Get metrics in Prometheus format"""
