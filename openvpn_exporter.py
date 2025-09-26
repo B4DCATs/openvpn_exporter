@@ -35,7 +35,6 @@ from prometheus_client import (
     CollectorRegistry, REGISTRY
 )
 from flask import Flask, Response, request, jsonify, abort
-import psutil
 from dotenv import load_dotenv
 import validators
 import structlog

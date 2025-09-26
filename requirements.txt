@@ -6,8 +6,7 @@ gunicorn==21.2.0
 python-dotenv==1.0.0
 
 # Security and validation
-psutil==5.9.6; platform_machine != "aarch64"
-psutil==5.9.6; platform_machine == "aarch64" and python_version >= "3.8"
+# psutil==5.9.6  # Temporarily disabled due to ARM64 compilation issues
 validators==0.22.0
 
 # Monitoring and logging
