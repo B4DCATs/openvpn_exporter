@@ -19,7 +19,7 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Install Python dependencies (force wheels to avoid compilation)
-RUN pip install --no-cache-dir --only-binary=all -r requirements.txt
+RUN pip install --no-cache-dir --only-binary=all --prefer-binary -r requirements.txt
 
 # Production stage
 FROM python:3.11-slim as production
