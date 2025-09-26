@@ -17,7 +17,7 @@ services:
     environment:
       - LISTEN_ADDRESS=${LISTEN_ADDRESS:-:9176}
       - TELEMETRY_PATH=${TELEMETRY_PATH:-/metrics}
-      - STATUS_PATHS=${STATUS_PATHS:-/var/log/openvpn/server.status,/var/log/openvpn/client.status}
+      - STATUS_PATHS=${STATUS_PATHS:-/var/log/openvpn/status.log}
       - IGNORE_INDIVIDUALS=${IGNORE_INDIVIDUALS:-false}
       - LOG_LEVEL=${LOG_LEVEL:-DEBUG}
       - RATE_LIMIT_WINDOW=${RATE_LIMIT_WINDOW:-60}
