@@ -13,7 +13,7 @@ env:
 
 jobs:
   build-and-push:
-    runs-on: [self-hosted, linux, x64, battle-cup]
+    runs-on: [self-hosted, linux, x64]
     permissions:
       contents: read
       packages: write
