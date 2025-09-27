@@ -13,7 +13,7 @@ services:
     environment:
       - LISTEN_ADDRESS=${LISTEN_ADDRESS:-:9176}
       - TELEMETRY_PATH=${TELEMETRY_PATH:-/metrics}
-      - STATUS_PATHS=${STATUS_PATHS:-/var/log/openvpn/status.log}
+      - STATUS_PATHS=/var/log/openvpn/status.log
       - IGNORE_INDIVIDUALS=${IGNORE_INDIVIDUALS:-false}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     restart: unless-stopped
