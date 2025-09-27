@@ -93,7 +93,7 @@ export IGNORE_INDIVIDUALS="true"
 
 ## Docker Compose
 
-Или используйте docker-compose:
+Или используйте docker compose:
 
 ```bash
 # Создайте .env файл
@@ -103,7 +103,7 @@ cp env.example .env
 nano .env
 
 # Запустите
-docker-compose up -d
+docker compose up -d
 ```
 
 ## Остановка

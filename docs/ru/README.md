@@ -67,7 +67,7 @@ git clone https://github.com/B4DCATs/openvpn_exporter.git
 cd openvpn_exporter
 
 # Запустить экспортер
-docker-compose up -d
+docker compose up -d
 
 # Проверить работу
 curl http://localhost:9176/metrics

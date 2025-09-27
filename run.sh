@@ -21,8 +21,8 @@ fi
 
 # Start exporter
 echo "🐳 Starting OpenVPN Exporter..."
-docker-compose up -d
+docker compose up -d
 
 echo "✅ Done! Exporter is running at http://localhost:9176"
 echo "📊 Metrics: http://localhost:9176/metrics"
-echo "🛑 Stop: docker-compose down"
+echo "🛑 Stop: docker compose down"

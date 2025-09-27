@@ -34,7 +34,7 @@ git clone https://github.com/your-username/openvpn_exporter.git
 cd openvpn_exporter
 
 # Запустите экспортер
-docker-compose up -d
+docker compose up -d
 ```
 
 #### Вариант 2: Docker напрямую

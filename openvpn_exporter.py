@@ -518,34 +518,46 @@ class OpenVPNStatusParser:
     def _parse_openvpn_client_list(self, lines: List[str], status_path: str) -> Dict[str, Any]:
         """Parse OpenVPN CLIENT LIST format"""
         connected_clients = 0
+        in_client_list = False
         
         for line in lines:
             if not line.strip():
                 continue
                 
-            # Skip header line
+            # Check for start of client list
             if line.startswith('OpenVPN CLIENT LIST'):
+                in_client_list = True
                 continue
                 
-            # Parse client entries (format may vary)
-            # This is a basic implementation - may need adjustment based on actual format
-            if ',' in line:
+            # Check for end of client list
+            if line.startswith('ROUTING TABLE') or line.startswith('GLOBAL STATS') or line.startswith('END'):
+                in_client_list = False
+                continue
+                
+            # Skip header lines
+            if line.startswith('Updated,') or line.startswith('Common Name,'):
+                continue
+                
+            # Parse client entries
+            if in_client_list and ',' in line:
                 fields = line.split(',')
-                if len(fields) >= 6:
+                if len(fields) >= 5:  # Common Name, Real Address, Bytes Received, Bytes Sent, Connected Since
                     connected_clients += 1
                     
                     if not self.ignore_individuals:
                         try:
                             # Extract client information
-                            common_name = self.validator.sanitize_filename(fields[0]) if fields[0] else 'unknown'
-                            real_address = fields[1] if self.validator.validate_ip_address(fields[1].split(':')[0]) else 'unknown'
-                            virtual_address = fields[2] if self.validator.validate_ip_address(fields[2]) else 'unknown'
+                            common_name = self.validator.sanitize_filename(fields[0].strip()) if fields[0].strip() else 'unknown'
+                            real_address = fields[1].strip() if self.validator.validate_ip_address(fields[1].strip().split(':')[0]) else 'unknown'
                             
                             # Try to parse bytes if available
-                            if len(fields) > 4:
+                            if len(fields) >= 4:
                                 try:
-                                    received_bytes = float(fields[3]) if fields[3] else 0
-                                    sent_bytes = float(fields[4]) if fields[4] else 0
+                                    received_bytes = float(fields[2].strip()) if fields[2].strip() else 0
+                                    sent_bytes = float(fields[3].strip()) if fields[3].strip() else 0
+                                    
+                                    # Use virtual address from routing table if available
+                                    virtual_address = 'unknown'
                                     
                                     self.openvpn_client_received_bytes.labels(
                                         status_path=status_path,
@@ -564,8 +576,14 @@ class OpenVPNStatusParser:
                                         username='unknown',
                                         job="openvpn-metrics"
                                     ).inc(sent_bytes)
-                                except (ValueError, IndexError):
-                                    logger.warning("Error parsing client data", line=line)
+                                    
+                                    logger.info("Parsed client data", 
+                                              common_name=common_name, 
+                                              real_address=real_address,
+                                              received_bytes=received_bytes,
+                                              sent_bytes=sent_bytes)
+                                except (ValueError, IndexError) as e:
+                                    logger.warning("Error parsing client data", error=str(e), line=line)
                         except (ValueError, IndexError) as e:
                             logger.warning("Error parsing client entry", error=str(e), line=line)
         
@@ -574,6 +592,8 @@ class OpenVPNStatusParser:
         
         # Set status update time
         self.openvpn_status_update_time.labels(status_path=status_path, job="openvpn-metrics").set(time.time())
+        
+        logger.info("Parsed OpenVPN CLIENT LIST", connected_clients=connected_clients)
         
         return {"connected_clients": connected_clients}
 

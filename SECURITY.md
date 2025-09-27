@@ -37,7 +37,7 @@
 - **NEW**: Enhanced logging with timestamps and context
 
 ### Container Security
-- Non-root user execution (configurable via docker-compose)
+- Non-root user execution (configurable via docker compose)
 - Minimal base image (Python slim)
 - Multi-stage build for smaller attack surface
 - Read-only filesystem where possible
@@ -151,7 +151,7 @@ tail -f /var/log/openvpn-exporter.log | grep -E "(ERROR|WARNING|Rate limit)"
 
 ### Production Environment
 ```yaml
-# docker-compose.yml
+# docker compose
 services:
   openvpn-exporter:
     environment:

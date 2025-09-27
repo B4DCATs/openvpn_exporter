@@ -8,10 +8,10 @@
 
 ```bash
 # Запуск продакшен версии
-docker-compose up -d
+docker compose up -d
 
 # Остановка
-docker-compose down
+docker compose down
 ```
 
 **Особенности:**
@@ -26,13 +26,13 @@ docker-compose down
 
 ```bash
 # Запуск dev версии
-docker-compose -f docker-compose.dev.yml up -d
+docker compose -f docker-compose.dev.yml up -d
 
 # Пересборка и запуск
-docker-compose -f docker-compose.dev.yml up --build -d
+docker compose -f docker-compose.dev.yml up --build -d
 
 # Остановка
-docker-compose -f docker-compose.dev.yml down
+docker compose -f docker-compose.dev.yml down
 ```
 
 **Особенности:**
@@ -72,12 +72,12 @@ MAX_REQUESTS_PER_WINDOW=100
 
 ### Production:
 ```bash
-docker-compose up -d
+docker compose up -d
 curl http://localhost:9176/metrics
 ```
 
 ### Development:
 ```bash
-docker-compose -f docker-compose.dev.yml up --build -d
+docker compose -f docker-compose.dev.yml up --build -d
 curl http://localhost:9176/metrics
 ```

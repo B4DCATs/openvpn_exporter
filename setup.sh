@@ -23,8 +23,8 @@ if ! command -v docker &> /dev/null; then
 fi
 
 # Check Docker Compose
-if ! command -v docker-compose &> /dev/null; then
-    echo "❌ Docker Compose is not installed. Install Docker Compose and try again."
+if ! docker compose version &> /dev/null; then
+    echo "❌ Docker Compose is not available. Install Docker Compose and try again."
     exit 1
 fi
 
@@ -89,11 +89,11 @@ fi
 
 # Stop old containers if any
 echo "🧹 Cleaning up old containers..."
-docker-compose down 2>/dev/null || true
+docker compose down 2>/dev/null || true
 
 # Start exporter
 echo "🐳 Starting OpenVPN Exporter..."
-docker-compose up -d
+docker compose up -d
 
 # Wait for startup
 echo "⏳ Waiting for exporter to start..."
@@ -103,7 +103,7 @@ sleep 5
 echo "🔍 Checking status..."
 
 # Check if container started
-if docker-compose ps | grep -q "Up"; then
+if docker compose ps | grep -q "Up"; then
     echo "✅ OpenVPN Exporter started successfully!"
     
     # Check metrics availability
@@ -117,10 +117,10 @@ if docker-compose ps | grep -q "Up"; then
     echo ""
     echo "🎉 Setup completed!"
     echo "📊 To check metrics run: curl http://localhost:9176/metrics"
-    echo "🛑 To stop run: docker-compose down"
+    echo "🛑 To stop run: docker compose down"
     
 else
     echo "❌ Error starting exporter. Check logs:"
-    echo "docker-compose logs"
+    echo "docker compose logs"
     exit 1
 fi
