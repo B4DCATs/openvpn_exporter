@@ -516,76 +516,117 @@ class OpenVPNStatusParser:
         return {"status": "parsed"}
     
     def _parse_openvpn_client_list(self, lines: List[str], status_path: str) -> Dict[str, Any]:
-        """Parse OpenVPN CLIENT LIST format"""
+        """Parse OpenVPN CLIENT LIST format with full routing table support"""
         connected_clients = 0
-        in_client_list = False
+        current_section = None
+        client_data = {}  # Store client data for routing table matching
+        routing_entries = {}  # Store routing table data
         
         for line in lines:
             if not line.strip():
                 continue
                 
-            # Check for start of client list
+            # Detect section headers
             if line.startswith('OpenVPN CLIENT LIST'):
-                in_client_list = True
+                current_section = 'client_list'
                 continue
-                
-            # Check for end of client list
-            if line.startswith('ROUTING TABLE') or line.startswith('GLOBAL STATS') or line.startswith('END'):
-                in_client_list = False
+            elif line.startswith('ROUTING TABLE'):
+                current_section = 'routing_table'
+                continue
+            elif line.startswith('GLOBAL STATS'):
+                current_section = 'global_stats'
+                continue
+            elif line.startswith('END'):
+                current_section = None
                 continue
                 
             # Skip header lines
-            if line.startswith('Updated,') or line.startswith('Common Name,'):
+            if line.startswith('Updated,') or line.startswith('Common Name,') or line.startswith('Virtual Address,'):
                 continue
                 
-            # Parse client entries
-            if in_client_list and ',' in line:
+            # Parse client list section
+            if current_section == 'client_list' and ',' in line:
                 fields = line.split(',')
                 if len(fields) >= 5:  # Common Name, Real Address, Bytes Received, Bytes Sent, Connected Since
                     connected_clients += 1
                     
-                    if not self.ignore_individuals:
-                        try:
-                            # Extract client information
-                            common_name = self.validator.sanitize_filename(fields[0].strip()) if fields[0].strip() else 'unknown'
-                            real_address = fields[1].strip() if self.validator.validate_ip_address(fields[1].strip().split(':')[0]) else 'unknown'
+                    try:
+                        common_name = self.validator.sanitize_filename(fields[0].strip()) if fields[0].strip() else 'unknown'
+                        real_address = fields[1].strip() if self.validator.validate_ip_address(fields[1].strip().split(':')[0]) else 'unknown'
+                        received_bytes = float(fields[2].strip()) if fields[2].strip() else 0
+                        sent_bytes = float(fields[3].strip()) if fields[3].strip() else 0
+                        
+                        # Store client data for routing table matching
+                        client_data[common_name] = {
+                            'real_address': real_address,
+                            'received_bytes': received_bytes,
+                            'sent_bytes': sent_bytes
+                        }
+                        
+                        if not self.ignore_individuals:
+                            # Set initial virtual address as unknown, will be updated from routing table
+                            virtual_address = 'unknown'
                             
-                            # Try to parse bytes if available
-                            if len(fields) >= 4:
-                                try:
-                                    received_bytes = float(fields[2].strip()) if fields[2].strip() else 0
-                                    sent_bytes = float(fields[3].strip()) if fields[3].strip() else 0
-                                    
-                                    # Use virtual address from routing table if available
-                                    virtual_address = 'unknown'
-                                    
-                                    self.openvpn_client_received_bytes.labels(
-                                        status_path=status_path,
-                                        common_name=common_name,
-                                        real_address=real_address,
-                                        virtual_address=virtual_address,
-                                        username='unknown',
-                                        job="openvpn-metrics"
-                                    ).inc(received_bytes)
-                                    
-                                    self.openvpn_client_sent_bytes.labels(
-                                        status_path=status_path,
-                                        common_name=common_name,
-                                        real_address=real_address,
-                                        virtual_address=virtual_address,
-                                        username='unknown',
-                                        job="openvpn-metrics"
-                                    ).inc(sent_bytes)
-                                    
-                                    logger.info("Parsed client data", 
-                                              common_name=common_name, 
-                                              real_address=real_address,
-                                              received_bytes=received_bytes,
-                                              sent_bytes=sent_bytes)
-                                except (ValueError, IndexError) as e:
-                                    logger.warning("Error parsing client data", error=str(e), line=line)
-                        except (ValueError, IndexError) as e:
-                            logger.warning("Error parsing client entry", error=str(e), line=line)
+                            self.openvpn_client_received_bytes.labels(
+                                status_path=status_path,
+                                common_name=common_name,
+                                real_address=real_address,
+                                virtual_address=virtual_address,
+                                username='unknown',
+                                job="openvpn-metrics"
+                            ).inc(received_bytes)
+                            
+                            self.openvpn_client_sent_bytes.labels(
+                                status_path=status_path,
+                                common_name=common_name,
+                                real_address=real_address,
+                                virtual_address=virtual_address,
+                                username='unknown',
+                                job="openvpn-metrics"
+                            ).inc(sent_bytes)
+                            
+                            logger.info("Parsed client data", 
+                                      common_name=common_name, 
+                                      real_address=real_address,
+                                      received_bytes=received_bytes,
+                                      sent_bytes=sent_bytes)
+                    except (ValueError, IndexError) as e:
+                        logger.warning("Error parsing client entry", error=str(e), line=line)
+            
+            # Parse routing table section
+            elif current_section == 'routing_table' and ',' in line:
+                fields = line.split(',')
+                if len(fields) >= 3:  # Virtual Address, Common Name, Real Address, Last Ref
+                    try:
+                        virtual_address = fields[0].strip()
+                        common_name = self.validator.sanitize_filename(fields[1].strip()) if fields[1].strip() else 'unknown'
+                        real_address = fields[2].strip() if len(fields) > 2 else 'unknown'
+                        last_ref = fields[3].strip() if len(fields) > 3 else 'unknown'
+                        
+                        # Store routing data
+                        routing_entries[common_name] = {
+                            'virtual_address': virtual_address,
+                            'real_address': real_address,
+                            'last_ref': last_ref
+                        }
+                        
+                        # Update client metrics with virtual address if client exists
+                        if common_name in client_data and not self.ignore_individuals:
+                            # Update the existing metrics with virtual address
+                            self.openvpn_route_last_reference_time.labels(
+                                status_path=status_path,
+                                common_name=common_name,
+                                real_address=real_address,
+                                virtual_address=virtual_address,
+                                job="openvpn-metrics"
+                            ).set(time.time())
+                            
+                            logger.info("Parsed routing entry", 
+                                      common_name=common_name,
+                                      virtual_address=virtual_address,
+                                      real_address=real_address)
+                    except (ValueError, IndexError) as e:
+                        logger.warning("Error parsing routing entry", error=str(e), line=line)
         
         # Set connected clients count
         self.openvpn_connected_clients.labels(status_path=status_path, job="openvpn-metrics").set(connected_clients)
@@ -593,9 +634,51 @@ class OpenVPNStatusParser:
         # Set status update time
         self.openvpn_status_update_time.labels(status_path=status_path, job="openvpn-metrics").set(time.time())
         
-        logger.info("Parsed OpenVPN CLIENT LIST", connected_clients=connected_clients)
+        # Initialize client-specific metrics with default values (OpenVPN CLIENT LIST format doesn't provide this data)
+        # These metrics are available in other OpenVPN status formats but not in CLIENT LIST format
+        if connected_clients > 0:
+            # Set default values for client metrics that are not available in CLIENT LIST format
+            self.openvpn_client_tun_tap_read_bytes.labels(
+                status_path=status_path, job="openvpn-metrics"
+            ).inc(0)
+            
+            self.openvpn_client_tun_tap_write_bytes.labels(
+                status_path=status_path, job="openvpn-metrics"
+            ).inc(0)
+            
+            self.openvpn_client_tcp_udp_read_bytes.labels(
+                status_path=status_path, job="openvpn-metrics"
+            ).inc(0)
+            
+            self.openvpn_client_tcp_udp_write_bytes.labels(
+                status_path=status_path, job="openvpn-metrics"
+            ).inc(0)
+            
+            self.openvpn_client_auth_read_bytes.labels(
+                status_path=status_path, job="openvpn-metrics"
+            ).inc(0)
+            
+            self.openvpn_client_pre_compress_bytes.labels(
+                status_path=status_path, job="openvpn-metrics"
+            ).inc(0)
+            
+            self.openvpn_client_post_compress_bytes.labels(
+                status_path=status_path, job="openvpn-metrics"
+            ).inc(0)
+            
+            self.openvpn_client_pre_decompress_bytes.labels(
+                status_path=status_path, job="openvpn-metrics"
+            ).inc(0)
+            
+            self.openvpn_client_post_decompress_bytes.labels(
+                status_path=status_path, job="openvpn-metrics"
+            ).inc(0)
         
-        return {"connected_clients": connected_clients}
+        logger.info("Parsed OpenVPN CLIENT LIST with routing", 
+                   connected_clients=connected_clients,
+                   routing_entries=len(routing_entries))
+        
+        return {"connected_clients": connected_clients, "routing_entries": len(routing_entries)}
 
 class OpenVPNExporter:
     """Main OpenVPN Exporter class"""
