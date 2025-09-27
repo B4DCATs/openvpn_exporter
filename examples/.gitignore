@@ -1,0 +1,15 @@
+# Ignore copied configuration files (keep only .example files)
+prometheus.yml
+openvpn-targets.json
+alert.rules.yml
+grafana-datasource.yml
+docker-compose.full.yml
+
+# Ignore any local test files
+*.local
+*.test
+*.tmp
+
+# Ignore any generated status files
+*.status.local
+*.status.test

@@ -93,6 +93,8 @@ services:
     environment:
       - STATUS_PATHS=/var/log/openvpn/server.status
       - LOG_LEVEL=INFO
+      # Restrict metrics access to specific IPs (optional)
+      - ALLOWED_IPS=192.168.1.100,10.0.0.50
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9176/health"]
       interval: 30s
@@ -101,7 +103,244 @@ services:
       start_period: 40s
 ```
 
+## 🔒 Security & Access Control
+
+### Restricting Metrics Access
+
+You can restrict access to the `/metrics` endpoint to specific IP addresses:
+
+```bash
+# Using environment variable
+export ALLOWED_IPS="192.168.1.100,10.0.0.50,monitoring-server.local"
+docker-compose up -d
+```
+
+```yaml
+# In docker-compose.yml
+environment:
+  - ALLOWED_IPS=192.168.1.100,10.0.0.50,monitoring-server.local
+```
+
+```bash
+# Using command line argument
+python openvpn_exporter.py --web.allowed-ips="192.168.1.100,10.0.0.50"
+```
+
+### Other Security Measures
+
+- **Rate Limiting**: Built-in protection against abuse
+- **Input Validation**: All inputs are validated and sanitized
+- **Path Traversal Protection**: Prevents directory traversal attacks
+- **Secure Logging**: Structured logging with sensitive data protection
+- **Non-root Container**: Runs as non-privileged user in Docker
+
 **Metrics will be available at:** `http://your-server:9176/metrics`
+
+## 📊 Prometheus Configuration
+
+### Basic Configuration
+
+Add the OpenVPN exporter to your `prometheus.yml`:
+
+```yaml
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'openvpn-exporter'
+    static_configs:
+      - targets: ['your-server:9176']
+    scrape_interval: 30s
+    metrics_path: /metrics
+```
+
+### Advanced Configuration with Security
+
+If you're using IP restrictions, you may need to configure Prometheus to connect from an allowed IP:
+
+```yaml
+scrape_configs:
+  - job_name: 'openvpn-exporter'
+    static_configs:
+      - targets: ['openvpn-server:9176']
+    scrape_interval: 30s
+    metrics_path: /metrics
+    # Optional: Add labels for better organization
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+      - source_labels: [__meta_openvpn_server]
+        target_label: openvpn_server
+```
+
+### Multiple OpenVPN Servers
+
+For monitoring multiple OpenVPN servers:
+
+```yaml
+scrape_configs:
+  - job_name: 'openvpn-servers'
+    static_configs:
+      - targets: 
+          - 'openvpn-server-1:9176'
+          - 'openvpn-server-2:9176'
+          - 'openvpn-server-3:9176'
+    scrape_interval: 30s
+    metrics_path: /metrics
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+```
+
+### Service Discovery (Optional)
+
+For dynamic discovery using DNS or file-based service discovery:
+
+```yaml
+scrape_configs:
+  - job_name: 'openvpn-exporter-dns'
+    dns_sd_configs:
+      - names: ['openvpn-exporter.internal']
+        type: 'A'
+        port: 9176
+    scrape_interval: 30s
+    metrics_path: /metrics
+```
+
+### Complete Monitoring Stack with Docker Compose
+
+Here's a complete `docker-compose.yml` for running OpenVPN exporter with Prometheus and Grafana:
+
+```yaml
+version: '3.8'
+
+services:
+  openvpn-exporter:
+    image: ghcr.io/b4dcats/openvpn_exporter:latest
+    container_name: openvpn-exporter
+    restart: unless-stopped
+    ports:
+      - "9176:9176"
+    volumes:
+      - /var/log/openvpn:/var/log/openvpn:ro
+      - /etc/openvpn:/etc/openvpn:ro
+    environment:
+      - STATUS_PATHS=/var/log/openvpn/server.status
+      - LOG_LEVEL=INFO
+      - ALLOWED_IPS=prometheus,grafana
+    networks:
+      - monitoring
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./examples/config/prometheus.yml.example:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./dashboard.json:/etc/grafana/provisioning/dashboards/openvpn.json:ro
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - monitoring
+
+volumes:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  monitoring:
+    driver: bridge
+```
+
+And the corresponding `prometheus.yml`:
+
+```yaml
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'openvpn-exporter'
+    static_configs:
+      - targets: ['openvpn-exporter:9176']
+    scrape_interval: 30s
+    metrics_path: /metrics
+```
+
+**Configuration Files Available:**
+- `examples/config/prometheus.yml.example` - Complete Prometheus configuration example
+- `examples/config/openvpn-targets.json.example` - File-based service discovery example
+- `examples/config/alert.rules.yml` - Prometheus alerting rules for OpenVPN monitoring
+- `examples/config/grafana-datasource.yml` - Automatic Grafana datasource provisioning
+- `examples/config/docker-compose.full.yml` - Complete monitoring stack with Prometheus and Grafana
+- `examples/status/` - Sample OpenVPN status files for testing
+
+### Using Configuration Examples
+
+1. **Copy example files** to your project root:
+   ```bash
+   cp examples/config/prometheus.yml.example prometheus.yml
+   cp examples/config/docker-compose.full.yml docker-compose.full.yml
+   ```
+
+2. **Customize the configuration** for your environment:
+   - Update IP addresses and hostnames
+   - Adjust paths to your OpenVPN status files
+   - Configure security settings
+
+3. **Test with sample data**:
+   ```bash
+   python openvpn_exporter.py --openvpn.status_paths=examples/status/client.status
+   ```
+
+## 📁 Project Structure
+
+```
+openvpn_exporter/
+├── openvpn_exporter.py          # Main exporter application
+├── docker-compose.yml           # Basic Docker Compose setup
+├── dashboard.json               # Grafana dashboard
+├── quick-start.sh              # One-command setup script
+├── examples/                   # Configuration examples
+│   ├── config/                 # Prometheus, Grafana configs
+│   └── status/                 # Sample OpenVPN status files
+├── docs/                       # Documentation
+└── tests/                      # Test files
+```
 
 ## 📋 Supported OpenVPN Status Formats
 

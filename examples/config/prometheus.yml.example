@@ -1,0 +1,59 @@
+# Prometheus Configuration Example for OpenVPN Exporter
+# Copy this file to prometheus.yml and adjust according to your setup
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # OpenVPN Exporter - Single Server
+  - job_name: 'openvpn-exporter'
+    static_configs:
+      - targets: ['your-openvpn-server:9176']
+    scrape_interval: 30s
+    metrics_path: /metrics
+    # Optional: Add labels for better organization
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+
+  # OpenVPN Exporter - Multiple Servers
+  # Uncomment and modify the following section if you have multiple OpenVPN servers
+  # - job_name: 'openvpn-servers'
+  #   static_configs:
+  #     - targets: 
+  #         - 'openvpn-server-1:9176'
+  #         - 'openvpn-server-2:9176'
+  #         - 'openvpn-server-3:9176'
+  #   scrape_interval: 30s
+  #   metrics_path: /metrics
+  #   relabel_configs:
+  #     - source_labels: [__address__]
+  #       target_label: instance
+
+  # OpenVPN Exporter - Service Discovery
+  # Uncomment if you want to use DNS-based service discovery
+  # - job_name: 'openvpn-exporter-dns'
+  #   dns_sd_configs:
+  #     - names: ['openvpn-exporter.internal']
+  #       type: 'A'
+  #       port: 9176
+  #   scrape_interval: 30s
+  #   metrics_path: /metrics
+
+  # Example: File-based service discovery
+  # - job_name: 'openvpn-exporter-file'
+  #   file_sd_configs:
+  #     - files:
+  #         - 'openvpn-targets.json'
+  #   scrape_interval: 30s
+  #   metrics_path: /metrics

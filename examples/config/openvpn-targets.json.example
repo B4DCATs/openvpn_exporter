@@ -1,0 +1,26 @@
+[
+  {
+    "targets": ["openvpn-server-1:9176"],
+    "labels": {
+      "instance": "openvpn-server-1",
+      "environment": "production",
+      "datacenter": "dc1"
+    }
+  },
+  {
+    "targets": ["openvpn-server-2:9176"],
+    "labels": {
+      "instance": "openvpn-server-2",
+      "environment": "production",
+      "datacenter": "dc2"
+    }
+  },
+  {
+    "targets": ["openvpn-server-test:9176"],
+    "labels": {
+      "instance": "openvpn-server-test",
+      "environment": "testing",
+      "datacenter": "dc1"
+    }
+  }
+]

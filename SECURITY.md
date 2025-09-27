@@ -1,199 +1,209 @@
-# Security Policy
+# Security Guide
 
-## Supported Versions
+This document describes the security features and access control mechanisms available in OpenVPN Prometheus Exporter v2.0.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 2.0.x   | :white_check_mark: |
-| 1.0.x   | :x:                |
+## 🔒 Access Control
 
-## Security Features in v2.0
+### IP Address Restrictions
 
-### Path Traversal Protection
-- All file paths are validated against allowed directories
-- Prevents access to sensitive system files like `/etc/passwd`, `/root/.ssh/`
-- Configurable allowed directories via environment variables
-- **NEW**: Enhanced path resolution with `Path.resolve()` for better security
+You can restrict access to the `/metrics` endpoint to specific IP addresses using the `ALLOWED_IPS` environment variable or `--web.allowed-ips` command line argument.
 
-### Input Validation & Sanitization
-- All user inputs are validated and sanitized
-- IP address format validation using `validators` library
-- Filename sanitization to prevent injection attacks
-- Content validation for suspicious patterns (XSS, script injection)
-- **NEW**: Regex-based pattern detection for malicious content
+#### Configuration Methods
 
-### Rate Limiting
-- Built-in rate limiting (100 requests per minute by default)
-- Per-IP request tracking with thread-safe operations
-- Configurable limits via environment variables
-- Automatic blocking of abusive clients
-- **NEW**: Thread-safe rate limiting with `threading.Lock()`
-
-### Secure Logging
-- Structured JSON logging with `structlog`
-- Sensitive data protection (no IPs or usernames in logs)
-- Correlation IDs for request tracking
-- No credentials or tokens in logs
-- **NEW**: Enhanced logging with timestamps and context
-
-### Container Security
-- Non-root user execution (configurable via docker compose)
-- Minimal base image (Python slim)
-- Multi-stage build for smaller attack surface
-- Read-only filesystem where possible
-- **NEW**: Health checks for container monitoring
-
-### OpenVPN CLIENT LIST Format Support
-- **NEW**: Support for "OpenVPN CLIENT LIST" status format
-- Enhanced parsing for different OpenVPN status file formats
-- Robust error handling for malformed status files
-- Graceful degradation when parsing fails
-
-## Security Best Practices
-
-### 1. File Permissions
+**1. Environment Variable**
 ```bash
-# Ensure status files have proper permissions
-chmod 644 /var/log/openvpn/server.status
-chown root:root /var/log/openvpn/server.status
+export ALLOWED_IPS="192.168.1.100,10.0.0.50,monitoring-server.local"
 ```
 
-### 2. Network Security
+**2. Docker Compose**
+```yaml
+environment:
+  - ALLOWED_IPS=192.168.1.100,10.0.0.50
+```
+
+**3. Command Line**
 ```bash
-# Use firewall rules to restrict access
-iptables -A INPUT -p tcp --dport 9176 -s 192.168.1.0/24 -j ACCEPT
+python openvpn_exporter.py --web.allowed-ips="192.168.1.100,10.0.0.50"
+```
+
+#### Examples
+
+```bash
+# Allow access from a single IP
+ALLOWED_IPS=192.168.1.100
+
+# Allow access from multiple IPs
+ALLOWED_IPS=192.168.1.100,10.0.0.50,172.16.0.10
+
+# Allow access from localhost only
+ALLOWED_IPS=127.0.0.1,::1
+
+# Allow access from monitoring server hostname
+ALLOWED_IPS=monitoring-server.local,prometheus.internal
+```
+
+#### How It Works
+
+- The exporter checks the `X-Forwarded-For` header first, then falls back to `remote_addr`
+- If `ALLOWED_IPS` is not set, access is allowed from any IP
+- If `ALLOWED_IPS` is set, only IPs in the list can access `/metrics`
+- Health check endpoint (`/health`) is always accessible for monitoring purposes
+- Access attempts from unauthorized IPs are logged with a 403 Forbidden response
+
+## 🛡️ Built-in Security Features
+
+### Rate Limiting
+- Built-in protection against abuse and DDoS attacks
+- Configurable rate limits per IP address
+- Automatic blocking of excessive requests
+
+### Input Validation
+- All inputs are validated and sanitized
+- Path traversal protection prevents directory traversal attacks
+- File size limits prevent resource exhaustion
+
+### Secure Logging
+- Structured JSON logging with correlation IDs
+- Sensitive data is automatically masked in logs
+- Security events are clearly identified
+
+### Container Security
+- Non-root container execution
+- Read-only file system mounts
+- Minimal attack surface with multi-stage Docker builds
+
+## 🔧 Network-Level Security
+
+### Firewall Configuration
+
+**UFW (Ubuntu/Debian)**
+```bash
+# Allow only specific IPs to access metrics
+sudo ufw allow from 192.168.1.100 to any port 9176
+sudo ufw allow from 10.0.0.50 to any port 9176
+
+# Or allow from specific network
+sudo ufw allow from 192.168.1.0/24 to any port 9176
+```
+
+**iptables**
+```bash
+# Allow only specific IPs
+iptables -A INPUT -p tcp --dport 9176 -s 192.168.1.100 -j ACCEPT
+iptables -A INPUT -p tcp --dport 9176 -s 10.0.0.50 -j ACCEPT
 iptables -A INPUT -p tcp --dport 9176 -j DROP
 ```
 
-### 3. Environment Variables
-```bash
-# Configure rate limiting
-export RATE_LIMIT_WINDOW=60
-export MAX_REQUESTS_PER_WINDOW=50
+### Reverse Proxy Configuration
+
+**Nginx**
+```nginx
+server {
+    listen 80;
+    server_name monitoring.yourdomain.com;
+    
+    # Restrict access by IP
+    allow 192.168.1.100;
+    allow 10.0.0.50;
+    deny all;
+    
+    location /metrics {
+        proxy_pass http://localhost:9176/metrics;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+    
+    location /health {
+        proxy_pass http://localhost:9176/health;
+    }
+}
 ```
 
-### 4. Docker Security
-```bash
-# Run with read-only root filesystem
-docker run --read-only \
-  --tmpfs /tmp \
-  -v /var/log/openvpn:/var/log/openvpn:ro \
-  openvpn-exporter:v2.0
+**Apache**
+```apache
+<VirtualHost *:80>
+    ServerName monitoring.yourdomain.com
+    
+    <Location "/metrics">
+        Require ip 192.168.1.100
+        Require ip 10.0.0.50
+        ProxyPass http://localhost:9176/metrics
+        ProxyPassReverse http://localhost:9176/metrics
+    </Location>
+    
+    <Location "/health">
+        ProxyPass http://localhost:9176/health
+        ProxyPassReverse http://localhost:9176/health
+    </Location>
+</VirtualHost>
 ```
 
-## Reporting a Vulnerability
+## 🔍 Monitoring and Alerting
 
-If you discover a security vulnerability, please follow these steps:
+### Security Event Monitoring
 
-1. **DO NOT** create a public GitHub issue
-2. Email security details to: security@your-domain.com
-3. Include:
-   - Description of the vulnerability
-   - Steps to reproduce
-   - Potential impact
-   - Suggested fix (if any)
+Monitor your logs for security events:
 
-## Security Checklist
-
-### Before Deployment
-- [ ] Configure proper file permissions
-- [ ] Set up firewall rules
-- [ ] Enable rate limiting
-- [ ] Configure log monitoring
-- [ ] Test with security tools
-
-### Regular Maintenance
-- [ ] Update dependencies regularly
-- [ ] Monitor logs for suspicious activity
-- [ ] Review access patterns
-- [ ] Update security configurations
-- [ ] Test backup and recovery
-
-## Security Tools Integration
-
-### OWASP ZAP
 ```bash
-# Test for common vulnerabilities
-docker run -t owasp/zap2docker-stable zap-baseline.py \
-  -t http://localhost:9176/metrics
+# Monitor for access denied events
+docker logs openvpn-exporter 2>&1 | grep "Access denied"
+
+# Monitor for rate limiting events
+docker logs openvpn-exporter 2>&1 | grep "Rate limit exceeded"
 ```
 
-### Bandit Security Linter
-```bash
-# Check for security issues in code
-bandit -r openvpn_exporter.py
-```
+### Prometheus Alerting Rules
 
-### Safety Check
-```bash
-# Check for known vulnerabilities in dependencies
-safety check
-```
-
-## Incident Response
-
-### If a Security Issue is Detected
-1. **Immediate**: Stop the service if necessary
-2. **Assess**: Determine scope and impact
-3. **Contain**: Isolate affected systems
-4. **Investigate**: Gather evidence and logs
-5. **Remediate**: Apply fixes and patches
-6. **Recover**: Restore service with monitoring
-7. **Learn**: Update security measures
-
-### Log Monitoring
-```bash
-# Monitor for suspicious activity
-tail -f /var/log/openvpn-exporter.log | grep -E "(ERROR|WARNING|Rate limit)"
-```
-
-## Security Configuration Examples
-
-### Production Environment
 ```yaml
-# docker compose
-services:
-  openvpn-exporter:
-    environment:
-      - LOG_LEVEL=WARNING
-      - RATE_LIMIT_WINDOW=60
-      - MAX_REQUESTS_PER_WINDOW=50
-    security_opt:
-      - no-new-privileges:true
-    read_only: true
-    tmpfs:
-      - /tmp
+groups:
+- name: openvpn_exporter_security
+  rules:
+  - alert: OpenVPNExporterAccessDenied
+    expr: increase(openvpn_exporter_access_denied_total[5m]) > 0
+    for: 0m
+    labels:
+      severity: warning
+    annotations:
+      summary: "OpenVPN Exporter access denied"
+      description: "Someone tried to access metrics from unauthorized IP"
+  
+  - alert: OpenVPNExporterRateLimit
+    expr: increase(openvpn_exporter_rate_limit_total[5m]) > 10
+    for: 0m
+    labels:
+      severity: critical
+    annotations:
+      summary: "OpenVPN Exporter rate limit exceeded"
+      description: "High rate of requests to OpenVPN Exporter"
 ```
 
-### High Security Environment
-```bash
-# Run with additional security constraints
-docker run --security-opt no-new-privileges \
-  --read-only \
-  --tmpfs /tmp \
-  --cap-drop ALL \
-  --user 1000:1000 \
-  openvpn-exporter:v2.0
-```
+## 🚨 Best Practices
 
-## Security Updates
+1. **Always use IP restrictions** in production environments
+2. **Monitor access logs** regularly for suspicious activity
+3. **Use HTTPS** when exposing metrics over the internet
+4. **Keep the exporter updated** to the latest version
+5. **Use dedicated monitoring networks** when possible
+6. **Implement proper firewall rules** at the network level
+7. **Use reverse proxies** for additional security layers
+8. **Regular security audits** of your monitoring infrastructure
 
-### Dependency Updates
-```bash
-# Check for security updates
-pip list --outdated
-pip install --upgrade package-name
-```
+## 🔧 Troubleshooting
 
-### Container Updates
-```bash
-# Rebuild with latest base image
-docker build --no-cache -t openvpn-exporter:v2.0 .
-```
+### Common Issues
 
-## Contact
+**403 Forbidden when accessing metrics**
+- Check if your IP is in the `ALLOWED_IPS` list
+- Verify the `X-Forwarded-For` header if behind a proxy
+- Check logs for "Access denied" messages
 
-For security-related questions or concerns:
-- Email: security@your-domain.com
-- PGP Key: [Your PGP Key ID]
-- Response Time: 24-48 hours for security issues
+**Health check failing**
+- Health endpoint should always be accessible
+- Check if the container is running properly
+- Verify port 9176 is not blocked by firewall
+
+**Rate limiting issues**
+- Check if you're making too many requests
+- Adjust rate limiting configuration if needed
+- Monitor logs for rate limit events
