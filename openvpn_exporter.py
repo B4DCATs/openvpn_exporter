@@ -341,6 +341,8 @@ class OpenVPNStatusParser:
             return self._parse_server_status_v3(lines, status_path)
         elif lines[0].startswith('OpenVPN STATISTICS'):
             return self._parse_client_status(lines, status_path)
+        elif lines[0].startswith('OpenVPN CLIENT LIST'):
+            return self._parse_openvpn_client_list(lines, status_path)
         else:
             raise ValueError(f"Unknown status file format: {lines[0][:50]}")
     
@@ -512,6 +514,68 @@ class OpenVPNStatusParser:
                     pass
         
         return {"status": "parsed"}
+    
+    def _parse_openvpn_client_list(self, lines: List[str], status_path: str) -> Dict[str, Any]:
+        """Parse OpenVPN CLIENT LIST format"""
+        connected_clients = 0
+        
+        for line in lines:
+            if not line.strip():
+                continue
+                
+            # Skip header line
+            if line.startswith('OpenVPN CLIENT LIST'):
+                continue
+                
+            # Parse client entries (format may vary)
+            # This is a basic implementation - may need adjustment based on actual format
+            if ',' in line:
+                fields = line.split(',')
+                if len(fields) >= 6:
+                    connected_clients += 1
+                    
+                    if not self.ignore_individuals:
+                        try:
+                            # Extract client information
+                            common_name = self.validator.sanitize_filename(fields[0]) if fields[0] else 'unknown'
+                            real_address = fields[1] if self.validator.validate_ip_address(fields[1].split(':')[0]) else 'unknown'
+                            virtual_address = fields[2] if self.validator.validate_ip_address(fields[2]) else 'unknown'
+                            
+                            # Try to parse bytes if available
+                            if len(fields) > 4:
+                                try:
+                                    received_bytes = float(fields[3]) if fields[3] else 0
+                                    sent_bytes = float(fields[4]) if fields[4] else 0
+                                    
+                                    self.openvpn_client_received_bytes.labels(
+                                        status_path=status_path,
+                                        common_name=common_name,
+                                        real_address=real_address,
+                                        virtual_address=virtual_address,
+                                        username='unknown',
+                                        job="openvpn-metrics"
+                                    ).inc(received_bytes)
+                                    
+                                    self.openvpn_client_sent_bytes.labels(
+                                        status_path=status_path,
+                                        common_name=common_name,
+                                        real_address=real_address,
+                                        virtual_address=virtual_address,
+                                        username='unknown',
+                                        job="openvpn-metrics"
+                                    ).inc(sent_bytes)
+                                except (ValueError, IndexError):
+                                    logger.warning("Error parsing client data", line=line)
+                        except (ValueError, IndexError) as e:
+                            logger.warning("Error parsing client entry", error=str(e), line=line)
+        
+        # Set connected clients count
+        self.openvpn_connected_clients.labels(status_path=status_path, job="openvpn-metrics").set(connected_clients)
+        
+        # Set status update time
+        self.openvpn_status_update_time.labels(status_path=status_path, job="openvpn-metrics").set(time.time())
+        
+        return {"connected_clients": connected_clients}
 
 class OpenVPNExporter:
     """Main OpenVPN Exporter class"""
