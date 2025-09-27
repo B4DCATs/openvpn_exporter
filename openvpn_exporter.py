@@ -564,9 +564,15 @@ class OpenVPNStatusParser:
                                 # Parse format like "2025-09-25 14:30:36"
                                 from datetime import datetime
                                 dt = datetime.strptime(connected_since, "%Y-%m-%d %H:%M:%S")
-                                connection_timestamp = dt.timestamp()
-                            except ValueError:
-                                logger.warning("Could not parse connection time", connected_since=connected_since)
+                                # Convert to UTC timestamp
+                                connection_timestamp = dt.replace(tzinfo=None).timestamp()
+                                logger.info("Parsed connection time", 
+                                          connected_since=connected_since, 
+                                          timestamp=connection_timestamp)
+                            except ValueError as e:
+                                logger.warning("Could not parse connection time", 
+                                             connected_since=connected_since, 
+                                             error=str(e))
                         
                         # Store client data for routing table matching
                         client_data[common_name] = {
@@ -643,6 +649,15 @@ class OpenVPNStatusParser:
                             if client_info.get('connection_timestamp'):
                                 labels['connection_time'] = str(int(client_info['connection_timestamp']))
                             
+                            # Update the existing client metrics with virtual address
+                            # We need to create new metrics with updated labels since Prometheus doesn't allow label updates
+                            received_bytes = client_info.get('received_bytes', 0)
+                            sent_bytes = client_info.get('sent_bytes', 0)
+                            
+                            # Set new metrics with correct virtual address
+                            self.openvpn_client_received_bytes.labels(**labels).inc(received_bytes)
+                            self.openvpn_client_sent_bytes.labels(**labels).inc(sent_bytes)
+                            
                             # Update route timing
                             self.openvpn_route_last_reference_time.labels(
                                 status_path=status_path,
@@ -652,7 +667,7 @@ class OpenVPNStatusParser:
                                 job="openvpn-metrics"
                             ).set(time.time())
                             
-                            logger.info("Parsed routing entry", 
+                            logger.info("Updated client metrics with routing info", 
                                       common_name=common_name,
                                       virtual_address=virtual_address,
                                       real_address=real_address,
@@ -668,43 +683,42 @@ class OpenVPNStatusParser:
         
         # Initialize client-specific metrics with default values (OpenVPN CLIENT LIST format doesn't provide this data)
         # These metrics are available in other OpenVPN status formats but not in CLIENT LIST format
-        if connected_clients > 0:
-            # Set default values for client metrics that are not available in CLIENT LIST format
-            self.openvpn_client_tun_tap_read_bytes.labels(
-                status_path=status_path, job="openvpn-metrics"
-            ).inc(0)
-            
-            self.openvpn_client_tun_tap_write_bytes.labels(
-                status_path=status_path, job="openvpn-metrics"
-            ).inc(0)
-            
-            self.openvpn_client_tcp_udp_read_bytes.labels(
-                status_path=status_path, job="openvpn-metrics"
-            ).inc(0)
-            
-            self.openvpn_client_tcp_udp_write_bytes.labels(
-                status_path=status_path, job="openvpn-metrics"
-            ).inc(0)
-            
-            self.openvpn_client_auth_read_bytes.labels(
-                status_path=status_path, job="openvpn-metrics"
-            ).inc(0)
-            
-            self.openvpn_client_pre_compress_bytes.labels(
-                status_path=status_path, job="openvpn-metrics"
-            ).inc(0)
-            
-            self.openvpn_client_post_compress_bytes.labels(
-                status_path=status_path, job="openvpn-metrics"
-            ).inc(0)
-            
-            self.openvpn_client_pre_decompress_bytes.labels(
-                status_path=status_path, job="openvpn-metrics"
-            ).inc(0)
-            
-            self.openvpn_client_post_decompress_bytes.labels(
-                status_path=status_path, job="openvpn-metrics"
-            ).inc(0)
+        # Always initialize these metrics to ensure they appear in Prometheus
+        self.openvpn_client_tun_tap_read_bytes.labels(
+            status_path=status_path, job="openvpn-metrics"
+        ).inc(0)
+        
+        self.openvpn_client_tun_tap_write_bytes.labels(
+            status_path=status_path, job="openvpn-metrics"
+        ).inc(0)
+        
+        self.openvpn_client_tcp_udp_read_bytes.labels(
+            status_path=status_path, job="openvpn-metrics"
+        ).inc(0)
+        
+        self.openvpn_client_tcp_udp_write_bytes.labels(
+            status_path=status_path, job="openvpn-metrics"
+        ).inc(0)
+        
+        self.openvpn_client_auth_read_bytes.labels(
+            status_path=status_path, job="openvpn-metrics"
+        ).inc(0)
+        
+        self.openvpn_client_pre_compress_bytes.labels(
+            status_path=status_path, job="openvpn-metrics"
+        ).inc(0)
+        
+        self.openvpn_client_post_compress_bytes.labels(
+            status_path=status_path, job="openvpn-metrics"
+        ).inc(0)
+        
+        self.openvpn_client_pre_decompress_bytes.labels(
+            status_path=status_path, job="openvpn-metrics"
+        ).inc(0)
+        
+        self.openvpn_client_post_decompress_bytes.labels(
+            status_path=status_path, job="openvpn-metrics"
+        ).inc(0)
         
         logger.info("Parsed OpenVPN CLIENT LIST with routing", 
                    connected_clients=connected_clients,
