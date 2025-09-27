@@ -224,14 +224,14 @@ class OpenVPNStatusParser:
         self.openvpn_client_received_bytes = Counter(
             'openvpn_server_client_received_bytes_total',
             'Amount of data received over a connection on the VPN server, in bytes',
-            ['status_path', 'common_name', 'real_address', 'virtual_address', 'username', 'job'],
+            ['status_path', 'common_name', 'real_address', 'virtual_address', 'username', 'job', 'connection_time'],
             registry=self.registry
         )
         
         self.openvpn_client_sent_bytes = Counter(
             'openvpn_server_client_sent_bytes_total',
             'Amount of data sent over a connection on the VPN server, in bytes',
-            ['status_path', 'common_name', 'real_address', 'virtual_address', 'username', 'job'],
+            ['status_path', 'common_name', 'real_address', 'virtual_address', 'username', 'job', 'connection_time'],
             registry=self.registry
         )
         
@@ -555,41 +555,55 @@ class OpenVPNStatusParser:
                         real_address = fields[1].strip() if self.validator.validate_ip_address(fields[1].strip().split(':')[0]) else 'unknown'
                         received_bytes = float(fields[2].strip()) if fields[2].strip() else 0
                         sent_bytes = float(fields[3].strip()) if fields[3].strip() else 0
+                        connected_since = fields[4].strip() if len(fields) > 4 else 'unknown'
+                        
+                        # Parse connection time to timestamp
+                        connection_timestamp = None
+                        if connected_since != 'unknown' and connected_since:
+                            try:
+                                # Parse format like "2025-09-25 14:30:36"
+                                from datetime import datetime
+                                dt = datetime.strptime(connected_since, "%Y-%m-%d %H:%M:%S")
+                                connection_timestamp = dt.timestamp()
+                            except ValueError:
+                                logger.warning("Could not parse connection time", connected_since=connected_since)
                         
                         # Store client data for routing table matching
                         client_data[common_name] = {
                             'real_address': real_address,
                             'received_bytes': received_bytes,
-                            'sent_bytes': sent_bytes
+                            'sent_bytes': sent_bytes,
+                            'connected_since': connected_since,
+                            'connection_timestamp': connection_timestamp
                         }
                         
                         if not self.ignore_individuals:
                             # Set initial virtual address as unknown, will be updated from routing table
                             virtual_address = 'unknown'
                             
-                            self.openvpn_client_received_bytes.labels(
-                                status_path=status_path,
-                                common_name=common_name,
-                                real_address=real_address,
-                                virtual_address=virtual_address,
-                                username='unknown',
-                                job="openvpn-metrics"
-                            ).inc(received_bytes)
+                            # Create labels with connection_time for dashboard compatibility
+                            labels = {
+                                'status_path': status_path,
+                                'common_name': common_name,
+                                'real_address': real_address,
+                                'virtual_address': virtual_address,
+                                'username': 'unknown',
+                                'job': "openvpn-metrics"
+                            }
                             
-                            self.openvpn_client_sent_bytes.labels(
-                                status_path=status_path,
-                                common_name=common_name,
-                                real_address=real_address,
-                                virtual_address=virtual_address,
-                                username='unknown',
-                                job="openvpn-metrics"
-                            ).inc(sent_bytes)
+                            # Add connection_time label if available
+                            if connection_timestamp:
+                                labels['connection_time'] = str(int(connection_timestamp))
+                            
+                            self.openvpn_client_received_bytes.labels(**labels).inc(received_bytes)
+                            self.openvpn_client_sent_bytes.labels(**labels).inc(sent_bytes)
                             
                             logger.info("Parsed client data", 
                                       common_name=common_name, 
                                       real_address=real_address,
                                       received_bytes=received_bytes,
-                                      sent_bytes=sent_bytes)
+                                      sent_bytes=sent_bytes,
+                                      connected_since=connected_since)
                     except (ValueError, IndexError) as e:
                         logger.warning("Error parsing client entry", error=str(e), line=line)
             
@@ -612,7 +626,24 @@ class OpenVPNStatusParser:
                         
                         # Update client metrics with virtual address if client exists
                         if common_name in client_data and not self.ignore_individuals:
-                            # Update the existing metrics with virtual address
+                            # Get client data
+                            client_info = client_data[common_name]
+                            
+                            # Create updated labels with virtual address and connection time
+                            labels = {
+                                'status_path': status_path,
+                                'common_name': common_name,
+                                'real_address': real_address,
+                                'virtual_address': virtual_address,
+                                'username': 'unknown',
+                                'job': "openvpn-metrics"
+                            }
+                            
+                            # Add connection_time if available
+                            if client_info.get('connection_timestamp'):
+                                labels['connection_time'] = str(int(client_info['connection_timestamp']))
+                            
+                            # Update route timing
                             self.openvpn_route_last_reference_time.labels(
                                 status_path=status_path,
                                 common_name=common_name,
@@ -624,7 +655,8 @@ class OpenVPNStatusParser:
                             logger.info("Parsed routing entry", 
                                       common_name=common_name,
                                       virtual_address=virtual_address,
-                                      real_address=real_address)
+                                      real_address=real_address,
+                                      connection_time=client_info.get('connected_since'))
                     except (ValueError, IndexError) as e:
                         logger.warning("Error parsing routing entry", error=str(e), line=line)
         
