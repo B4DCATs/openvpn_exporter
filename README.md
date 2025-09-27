@@ -6,6 +6,10 @@
 [![Discord](https://img.shields.io/discord/1411852800241176616?style=for-the-badge&logo=discord&logoColor=white&label=Discord)](https://discord.gg/VMKdhujjCW)
 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/B4DCATs/openvpn_exporter)
 
+## 📊 Dashboard Preview
+
+![OpenVPN Exporter Dashboard](docs/openvpn-exporter.png)
+
 ## 🔒 **NEW: IP Access Control**
 
 Restrict metrics access to specific IP addresses for enhanced security:
@@ -144,6 +148,37 @@ python openvpn_exporter.py --web.allowed-ips="192.168.1.100,10.0.0.50"
 - **Non-root Container**: Runs as non-privileged user in Docker
 
 **Metrics will be available at:** `http://your-server:9176/metrics`
+
+## 📈 Grafana Dashboard
+
+Import the included `dashboard.json` into Grafana to get a comprehensive OpenVPN monitoring dashboard with:
+
+- **Client Statistics**: Connected clients, traffic, connection times
+- **Server Health**: Server status and availability monitoring  
+- **Traffic Analysis**: Bytes sent/received, top traffic users
+- **Security Monitoring**: Access control and rate limiting alerts
+
+![OpenVPN Dashboard Preview](docs/openvpn-exporter.png)
+
+### Importing the Dashboard
+
+1. **Download the dashboard file:**
+   ```bash
+   curl -O https://raw.githubusercontent.com/B4DCATs/openvpn_exporter/main/dashboard.json
+   ```
+
+2. **Import in Grafana:**
+   - Go to Grafana → Dashboards → Import
+   - Upload `dashboard.json` or paste the content
+   - Select your Prometheus datasource
+   - Configure variables if needed
+
+3. **Dashboard Features:**
+   - Real-time client monitoring
+   - Traffic statistics and trends
+   - Connection time tracking
+   - Server health indicators
+   - Security alerts and notifications
 
 ## 📊 Prometheus Configuration
 
@@ -348,6 +383,7 @@ openvpn_exporter/
 │   ├── config/                 # Prometheus, Grafana configs
 │   └── status/                 # Sample OpenVPN status files
 ├── docs/                       # Documentation
+│   └── openvpn-exporter.png    # Dashboard screenshot
 └── tests/                      # Test files
 ```
 
