@@ -6,8 +6,8 @@ This repository provides a secure Prometheus metrics exporter for [OpenVPN](http
 
 ## 📚 Documentation
 
-- 🇷🇺 [Русская документация](../ru/README.md)
-- 🇺🇸 [English Documentation](README.md) (current)
+- 🇷🇺 [../ru/README.md](../ru/README.md)
+- 🇺🇸 [README.md](README.md) (current)
 
 ## 🚀 New Features in v2.0
 

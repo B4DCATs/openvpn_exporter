@@ -2,8 +2,11 @@
 
 [![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)](https://hub.docker.com/r/b4dcats/openvpn_exporter)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![License](https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge)](LICENSE)
-[![Discord](https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/VMKdhujjCW)
+[![License](https://img.shields.io/badge/license-Apache%202.0-green.svg?style=for-the-badge)](LICENSE)
+[![Discord](https://img.shields.io/discord/VMKdhujjCW?style=for-the-badge&logo=discord&logoColor=white&label=Discord)](https://discord.gg/VMKdhujjCW)
+[![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/B4DCATs/openvpn_exporter)
+[![GitHub stars](https://img.shields.io/github/stars/B4DCATs/openvpn_exporter?style=for-the-badge&logo=github&logoColor=white)](https://github.com/B4DCATs/openvpn_exporter/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/B4DCATs/openvpn_exporter?style=for-the-badge&logo=github&logoColor=white)](https://github.com/B4DCATs/openvpn_exporter/network)
 
 **Enhanced Python implementation with improved security features**
 
@@ -11,8 +14,8 @@ This repository provides a secure Prometheus metrics exporter for [OpenVPN](http
 
 ## 📚 Documentation
 
-- 🇷🇺 [Русская документация](docs/ru/README.md)
-- 🇺🇸 [English Documentation](docs/en/README.md)
+- 🇷🇺 [docs/ru/README.md](docs/ru/README.md)
+- 🇺🇸 [docs/en/README.md](docs/en/README.md)
 
 ## 🚀 New Features in v2.0
 
@@ -139,7 +142,22 @@ docker run -d \
 
 Metrics should be available at http://localhost:9176/metrics.
 
-## Get a standalone executable binary
+## 📄 License
 
-You can download the pre-compiled binaries from the
-[releases page](https://github.com/kumina/openvpn_exporter/releases).
+This project is licensed under the **Apache License 2.0** - see the [LICENSE](LICENSE) file for details.
+
+### What this means:
+- ✅ **Free to use** - Commercial and personal use allowed
+- ✅ **Free to modify** - You can change the code
+- ✅ **Free to distribute** - You can share and redistribute
+- ✅ **Patent protection** - Protection against patent lawsuits
+- ⚠️ **Must include license** - Include the Apache 2.0 license with distributions
+- ⚠️ **Must credit changes** - Indicate if you modified the files
+
+## 🔗 Useful Links
+
+- [OpenVPN](https://openvpn.net/)
+- [Prometheus](https://prometheus.io/)
+- [Grafana](https://grafana.com/)
+- [Docker](https://www.docker.com/)
+- [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)

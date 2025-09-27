@@ -13,30 +13,41 @@
 - All file paths are validated against allowed directories
 - Prevents access to sensitive system files like `/etc/passwd`, `/root/.ssh/`
 - Configurable allowed directories via environment variables
+- **NEW**: Enhanced path resolution with `Path.resolve()` for better security
 
 ### Input Validation & Sanitization
 - All user inputs are validated and sanitized
-- IP address format validation
+- IP address format validation using `validators` library
 - Filename sanitization to prevent injection attacks
 - Content validation for suspicious patterns (XSS, script injection)
+- **NEW**: Regex-based pattern detection for malicious content
 
 ### Rate Limiting
 - Built-in rate limiting (100 requests per minute by default)
-- Per-IP request tracking
+- Per-IP request tracking with thread-safe operations
 - Configurable limits via environment variables
 - Automatic blocking of abusive clients
+- **NEW**: Thread-safe rate limiting with `threading.Lock()`
 
 ### Secure Logging
-- Structured JSON logging
+- Structured JSON logging with `structlog`
 - Sensitive data protection (no IPs or usernames in logs)
 - Correlation IDs for request tracking
 - No credentials or tokens in logs
+- **NEW**: Enhanced logging with timestamps and context
 
 ### Container Security
-- Non-root user execution
+- Non-root user execution (configurable via docker-compose)
 - Minimal base image (Python slim)
 - Multi-stage build for smaller attack surface
 - Read-only filesystem where possible
+- **NEW**: Health checks for container monitoring
+
+### OpenVPN CLIENT LIST Format Support
+- **NEW**: Support for "OpenVPN CLIENT LIST" status format
+- Enhanced parsing for different OpenVPN status file formats
+- Robust error handling for malformed status files
+- Graceful degradation when parsing fails
 
 ## Security Best Practices
 
