@@ -1,9 +1,9 @@
 # OpenVPN Prometheus Exporter v2.0
 
-[![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)](https://hub.docker.com/r/b4dcats/openvpn_exporter)
+[![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)](https://github.com/B4DCATs/openvpn_exporter/pkgs/container/openvpn_exporter)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg?style=for-the-badge)](LICENSE)
-[![Discord](https://img.shields.io/discord/VMKdhujjCW?style=for-the-badge&logo=discord&logoColor=white&label=Discord)](https://discord.gg/VMKdhujjCW)
+[![Discord](https://img.shields.io/discord/1411852800241176616?style=for-the-badge&logo=discord&logoColor=white&label=Discord)](https://discord.gg/VMKdhujjCW)
 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/B4DCATs/openvpn_exporter)
 [![GitHub stars](https://img.shields.io/github/stars/B4DCATs/openvpn_exporter?style=for-the-badge&logo=github&logoColor=white)](https://github.com/B4DCATs/openvpn_exporter/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/B4DCATs/openvpn_exporter?style=for-the-badge&logo=github&logoColor=white)](https://github.com/B4DCATs/openvpn_exporter/network)
@@ -14,8 +14,8 @@ This repository provides a secure Prometheus metrics exporter for [OpenVPN](http
 
 ## 📚 Documentation
 
-- [🇷🇺](docs/ru/README.md)
-- [🇺🇸](docs/en/README.md)
+[🇺🇸](docs/en/README.md) [🇷🇺](docs/ru/README.md)
+
 
 ## 🚀 New Features in v2.0
 
