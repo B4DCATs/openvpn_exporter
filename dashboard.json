@@ -81,7 +81,7 @@
         "h": 2,
         "w": 3,
         "x": 0,
-        "y": 0
+        "y": 23
       },
       "id": 100,
       "links": [
@@ -102,7 +102,7 @@
         "h": 2,
         "w": 3,
         "x": 3,
-        "y": 0
+        "y": 23
       },
       "id": 101,
       "links": [
@@ -287,7 +287,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "",
-      "type": "singlestat",
+      "type": "stat",
       "valueFontSize": "150%",
       "valueMaps": [
         {
@@ -306,7 +306,8 @@
           "value": "0"
         }
       ],
-      "valueName": "current"
+      "valueName": "current",
+      "textMode": "value"
     },
     {
       "columns": [],
@@ -544,7 +545,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "",
-      "type": "singlestat",
+      "type": "stat",
       "valueFontSize": "150%",
       "valueMaps": [
         {
@@ -558,7 +559,8 @@
           "value": "0"
         }
       ],
-      "valueName": "current"
+      "valueName": "current",
+      "textMode": "value"
     },
     {
       "cacheTimeout": null,
@@ -635,7 +637,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "",
-      "type": "singlestat",
+      "type": "stat",
       "valueFontSize": "150%",
       "valueMaps": [
         {
@@ -644,7 +646,8 @@
           "value": "null"
         }
       ],
-      "valueName": "current"
+      "valueName": "current",
+      "textMode": "value"
     },
     {
       "cacheTimeout": null,
@@ -711,7 +714,7 @@
       "tableColumn": "__name__",
       "targets": [
         {
-          "expr": "count(openvpn_server_client_received_bytes_total{common_name=~\"server[0-9].example.com\"}) or absent(count(openvpn_server_client_received_bytes_total{common_name=~\"server[0-9].example.com\"}))-1",
+          "expr": "count(openvpn_server_client_received_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"$client\"}) or absent(count(openvpn_server_client_received_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"$client\"}))-1",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -723,7 +726,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "",
-      "type": "singlestat",
+      "type": "stat",
       "valueFontSize": "150%",
       "valueMaps": [
         {
@@ -737,7 +740,8 @@
           "value": "0"
         }
       ],
-      "valueName": "current"
+      "valueName": "current",
+      "textMode": "value"
     },
     {
       "cacheTimeout": null,
@@ -803,7 +807,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(increase(openvpn_server_client_sent_bytes_total[1d]))",
+          "expr": "sum(increase(openvpn_server_client_sent_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"$client\"}[1d]))",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -814,7 +818,7 @@
       "timeFrom": "24h",
       "timeShift": null,
       "title": "",
-      "type": "singlestat",
+      "type": "stat",
       "valueFontSize": "80%",
       "valueMaps": [
         {
@@ -823,7 +827,8 @@
           "value": "null"
         }
       ],
-      "valueName": "current"
+      "valueName": "current",
+      "textMode": "value"
     },
     {
       "cacheTimeout": null,
@@ -890,7 +895,7 @@
       "tableColumn": "__name__",
       "targets": [
         {
-          "expr": "count(openvpn_server_client_received_bytes_total{common_name=~\"[a-z]+ee\"}) or absent(count(openvpn_server_client_received_bytes_total{common_name=~\"[a-z]+ee\"}))-1",
+          "expr": "count(openvpn_server_client_received_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"$client\"}) or absent(count(openvpn_server_client_received_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"$client\"}))-1",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -902,10 +907,11 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "",
-      "type": "singlestat",
+      "type": "stat",
       "valueFontSize": "150%",
       "valueMaps": [],
-      "valueName": "current"
+      "valueName": "current",
+      "textMode": "value"
     },
     {
       "cacheTimeout": null,
@@ -970,7 +976,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "sum(increase(openvpn_server_client_received_bytes_total[1d]))",
+          "expr": "sum(increase(openvpn_server_client_received_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"$client\"}[1d]))",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -981,7 +987,7 @@
       "timeFrom": "24h",
       "timeShift": null,
       "title": "",
-      "type": "singlestat",
+      "type": "stat",
       "valueFontSize": "80%",
       "valueMaps": [
         {
@@ -990,7 +996,8 @@
           "value": "null"
         }
       ],
-      "valueName": "current"
+      "valueName": "current",
+      "textMode": "value"
     },
     {
       "aliasColors": {},
@@ -1277,7 +1284,8 @@
       "timeShift": null,
       "title": "Traffic Distribution",
       "type": "grafana-piechart-panel",
-      "valueName": "current"
+      "valueName": "current",
+      "textMode": "value"
     },
     {
       "aliasColors": {},
