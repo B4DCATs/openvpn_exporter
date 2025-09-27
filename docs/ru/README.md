@@ -6,8 +6,8 @@
 
 ## 📚 Документация
 
-- 🇷🇺 [README.md](README.md) (текущая)
-- 🇺🇸 [../en/README.md](../en/README.md)
+- [🇷🇺](README.md) (текущая)
+- [🇺🇸](../en/README.md)
 
 ## 🚀 Новые возможности в v2.0
 
