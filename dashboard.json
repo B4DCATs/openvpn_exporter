@@ -1,4 +1,52 @@
 {
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "description": "OpenVPN Server Exporter",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "6.2.0-beta2"
+    },
+    {
+      "type": "panel",
+      "id": "grafana-piechart-panel",
+      "name": "Pie Chart",
+      "version": "1.3.6"
+    },
+    {
+      "type": "panel",
+      "id": "graph",
+      "name": "Graph",
+      "version": ""
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "singlestat",
+      "name": "Singlestat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    }
+  ],
   "annotations": {
     "list": [
       {
@@ -172,7 +220,21 @@
       },
       "fieldConfig": {
         "defaults": {
-          "mappings": [],
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "text": "DOWN"
+                },
+                "1": {
+                  "color": "green", 
+                  "text": "UP"
+                }
+              },
+              "type": "value"
+            }
+          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -185,6 +247,12 @@
                 "value": 80
               }
             ]
+          },
+          "unit": "short",
+          "custom": {
+            "unit": "short",
+            "suffix": "",
+            "prefix": "Status: "
           }
         },
         "overrides": []
@@ -329,7 +397,7 @@
               },
               {
                 "id": "unit",
-                "value": "time: YYYY-MM-DD HH:mm:ss"
+                "value": "dateTimeAsSystem"
               },
               {
                 "id": "custom.align",
@@ -477,7 +545,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sort_desc(sum(label_replace(openvpn_server_client_received_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"$client\"}, \"connection_time\", \"${1}000\", \"connection_time\", \"(.*)\"))by(common_name, real_address, virtual_address))",
+          "expr": "sort_desc(sum(label_replace(openvpn_server_client_received_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"$client\", common_name!=\"unknown\", virtual_address!=\"unknown\"}, \"connection_time\", \"${1}000\", \"connection_time\", \"(.*)\"))by(common_name, real_address, virtual_address, connection_time))",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
@@ -488,7 +556,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "sum(label_replace(openvpn_server_client_sent_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"$client\"}, \"connection_time\", \"${1}000\", \"connection_time\", \"(.*)\"))by(common_name, real_address, virtual_address)",
+          "expr": "sum(label_replace(openvpn_server_client_sent_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"$client\", common_name!=\"unknown\", virtual_address!=\"unknown\"}, \"connection_time\", \"${1}000\", \"connection_time\", \"(.*)\"))by(common_name, real_address, virtual_address, connection_time)",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
@@ -526,7 +594,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "clients"
         },
         "overrides": []
       },
@@ -552,10 +621,6 @@
           "values": false
         },
         "showPercentChange": false,
-        "text": {
-          "titleSize": 0,
-          "valueSize": 14
-        },
         "textMode": "value",
         "wideLayout": true
       },
@@ -598,6 +663,11 @@
                 "value": 80
               }
             ]
+          },
+          "unit": "s",
+          "custom": {
+            "unit": "s",
+            "suffix": " since status update"
           }
         },
         "overrides": []
@@ -667,6 +737,10 @@
                 "value": 80
               }
             ]
+          },
+          "unit": "short",
+          "custom": {
+            "unit": "servers"
           }
         },
         "overrides": []
@@ -706,7 +780,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "count(openvpn_server_client_received_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"$client\"}) or absent(count(openvpn_server_client_received_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"$client\"}))-1",
+          "expr": "count(openvpn_server_client_received_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"server*\"}) or absent(count(openvpn_server_client_received_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"server*\"}))-1",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -737,6 +811,11 @@
                 "value": 80
               }
             ]
+          },
+          "unit": "decbytes",
+          "custom": {
+            "unit": "decbytes",
+            "suffix": " sent today"
           }
         },
         "overrides": []
@@ -808,6 +887,10 @@
                 "value": 80
               }
             ]
+          },
+          "unit": "short",
+          "custom": {
+            "unit": "users"
           }
         },
         "overrides": []
@@ -847,7 +930,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "count(openvpn_server_client_received_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"$client\"}) or absent(count(openvpn_server_client_received_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"$client\"}))-1",
+          "expr": "count(openvpn_server_client_received_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"[a-z]+ee\"}) or absent(count(openvpn_server_client_received_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"[a-z]+ee\"}))-1",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -878,6 +961,11 @@
                 "value": 80
               }
             ]
+          },
+          "unit": "decbytes",
+          "custom": {
+            "unit": "decbytes",
+            "suffix": " received today"
           }
         },
         "overrides": []
@@ -973,7 +1061,8 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "decbytes"
         },
         "overrides": [
           {
@@ -1620,6 +1709,6 @@
   "timepicker": {},
   "timezone": "",
   "title": "OpenVPN Server",
-  "uid": null,
+  "uid": "${DS_PROMETHEUS}",
   "version": 4
 }

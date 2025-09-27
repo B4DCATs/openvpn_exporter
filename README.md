@@ -5,12 +5,28 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg?style=for-the-badge)](LICENSE)
 [![Discord](https://img.shields.io/discord/1411852800241176616?style=for-the-badge&logo=discord&logoColor=white&label=Discord)](https://discord.gg/VMKdhujjCW)
 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/B4DCATs/openvpn_exporter)
-[![GitHub stars](https://img.shields.io/github/stars/B4DCATs/openvpn_exporter?style=for-the-badge&logo=github&logoColor=white)](https://github.com/B4DCATs/openvpn_exporter/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/B4DCATs/openvpn_exporter?style=for-the-badge&logo=github&logoColor=white)](https://github.com/B4DCATs/openvpn_exporter/network)
+
 
 **Enhanced Python implementation with improved security features**
 
 This repository provides a secure Prometheus metrics exporter for [OpenVPN](https://openvpn.net/). The v2.0 release is a complete rewrite in Python with significant security improvements and enhanced functionality.
+
+## 🛠️ OpenVPN Server Setup
+
+Before using this exporter, you need to set up an OpenVPN server. We recommend using the excellent [openvpn-install](https://github.com/angristan/openvpn-install) script by [angristan](https://github.com/angristan):
+
+```bash
+curl -O https://raw.githubusercontent.com/angristan/openvpn-install/master/openvpn-install.sh
+chmod +x openvpn-install.sh
+./openvpn-install.sh
+```
+
+This script will:
+- Install OpenVPN server on Debian, Ubuntu, Fedora, CentOS, Arch Linux, Oracle Linux, Rocky Linux and AlmaLinux
+- Configure secure encryption settings (ECDSA certificates, AES-128-GCM, TLS 1.2)
+- Set up proper firewall rules
+- Generate client configuration files
+- Configure status logging for monitoring
 
 ## 📚 Documentation
 
@@ -36,20 +52,56 @@ This repository provides a secure Prometheus metrics exporter for [OpenVPN](http
 
 ## 🚀 Quick Start
 
-**Want to get started in 30 seconds?** See [QUICKSTART.md](QUICKSTART.md)
+**Want to get started in 30 seconds?** Use our one-liner script:
 
-### Super Simple Setup (1 command):
 ```bash
-# Clone and run in one command
-git clone https://github.com/B4DCATs/openvpn_exporter.git && cd openvpn_exporter && sudo ./run.sh
+# One command setup (no git clone needed)
+curl -fsSL https://raw.githubusercontent.com/B4DCATs/openvpn_exporter/main/quick-start.sh | sudo bash
 ```
 
-### Or step by step:
+This script will:
+- Download the latest docker-compose.yml
+- Set proper permissions
+- Start the exporter with sensible defaults
+- Configure OpenVPN status file monitoring
+
+### Alternative: Manual Setup
+
 ```bash
-git clone https://github.com/B4DCATs/openvpn_exporter.git
-cd openvpn_exporter
-sudo ./run.sh
+# Download and run
+curl -O https://raw.githubusercontent.com/B4DCATs/openvpn_exporter/main/docker-compose.yml
+sudo docker-compose up -d
 ```
+
+### Docker Compose Example
+
+Here's the complete `docker-compose.yml` file for easy reference:
+
+```yaml
+version: '3.8'
+
+services:
+  openvpn-exporter:
+    image: ghcr.io/b4dcats/openvpn_exporter:latest
+    container_name: openvpn-exporter
+    restart: unless-stopped
+    ports:
+      - "9176:9176"
+    volumes:
+      - /var/log/openvpn:/var/log/openvpn:ro
+      - /etc/openvpn:/etc/openvpn:ro
+    environment:
+      - STATUS_PATHS=/var/log/openvpn/server.status
+      - LOG_LEVEL=INFO
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9176/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+```
+
+**Metrics will be available at:** `http://your-server:9176/metrics`
 
 ## 📋 Supported OpenVPN Status Formats
 
