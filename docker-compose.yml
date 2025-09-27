@@ -17,6 +17,7 @@ services:
       - IGNORE_INDIVIDUALS=${IGNORE_INDIVIDUALS:-false}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     restart: unless-stopped
+    user: "0:0"  # Run as root to access OpenVPN status file
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9176/health"]
       interval: 30s
