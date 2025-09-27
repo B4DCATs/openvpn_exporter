@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.2] - 2025-09-27
+
+### Added
+- **IP Access Control**: Restrict metrics access to specific IP addresses using `ALLOWED_IPS` environment variable
+- **Enhanced Security**: New `--web.allowed-ips` command line argument for IP-based access control
+- **Configuration Examples**: Complete examples directory with Prometheus, Grafana, and Docker Compose configurations
+- **Sample Status Files**: Example OpenVPN status files in all supported formats
+- **Security Documentation**: Comprehensive security guide with firewall and reverse proxy examples
+- **Monitoring Stack**: Complete Docker Compose stack with Prometheus and Grafana
+- **Alerting Rules**: Prometheus alerting rules for OpenVPN monitoring and security events
+
+### Changed
+- **Security Enhancement**: Metrics endpoint now checks IP addresses before allowing access
+- **Documentation**: Updated README with security features and configuration examples
+- **Project Structure**: Organized examples and configuration files in dedicated directories
+
+### Fixed
+- **Access Control**: Proper handling of `X-Forwarded-For` headers for reverse proxy setups
+- **Security Logging**: Enhanced logging for access denied events
+
 ## [2.0.1] - 2025-09-27
 
 ### Added

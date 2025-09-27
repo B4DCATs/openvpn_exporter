@@ -1,4 +1,4 @@
-# OpenVPN Prometheus Exporter v2.0
+# OpenVPN Prometheus Exporter v2.0.2
 
 [![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)](https://github.com/B4DCATs/openvpn_exporter/pkgs/container/openvpn_exporter)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
@@ -6,6 +6,15 @@
 [![Discord](https://img.shields.io/discord/1411852800241176616?style=for-the-badge&logo=discord&logoColor=white&label=Discord)](https://discord.gg/VMKdhujjCW)
 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/B4DCATs/openvpn_exporter)
 
+## 🔒 **NEW: IP Access Control**
+
+Restrict metrics access to specific IP addresses for enhanced security:
+
+```bash
+# Allow access only from specific IPs
+export ALLOWED_IPS="192.168.1.100,10.0.0.50,monitoring-server.local"
+docker-compose up -d
+```
 
 **Enhanced Python implementation with improved security features**
 
@@ -82,7 +91,7 @@ version: '3.8'
 
 services:
   openvpn-exporter:
-    image: ghcr.io/b4dcats/openvpn_exporter:latest
+    image: ghcr.io/b4dcats/openvpn_exporter:v2.0.2
     container_name: openvpn-exporter
     restart: unless-stopped
     ports:
@@ -93,7 +102,7 @@ services:
     environment:
       - STATUS_PATHS=/var/log/openvpn/server.status
       - LOG_LEVEL=INFO
-      # Restrict metrics access to specific IPs (optional)
+      # 🔒 SECURITY: Restrict metrics access to specific IPs
       - ALLOWED_IPS=192.168.1.100,10.0.0.50
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9176/health"]

@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-OpenVPN Prometheus Exporter v2.0
-Enhanced security and Python implementation
+OpenVPN Prometheus Exporter v2.0.2
+Enhanced security and Python implementation with IP Access Control
 
 Security improvements:
 - Path traversal protection
 - Input validation and sanitization
 - Rate limiting
+- IP-based access control
 - Authentication support
 - Secure logging
 - Content validation
@@ -796,7 +797,7 @@ def create_app(status_paths: List[str], ignore_individuals: bool = False, allowe
         return jsonify({
             "status": "healthy",
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "version": "2.0.0"
+            "version": "2.0.2"
         })
     
     @app.route('/')
@@ -867,7 +868,7 @@ def main():
     allowed_ips_str = getattr(args, 'web.allowed_ips')
     allowed_ips = [ip.strip() for ip in allowed_ips_str.split(',') if ip.strip()] if allowed_ips_str else None
     
-    logger.info("Starting OpenVPN Exporter v2.0",
+    logger.info("Starting OpenVPN Exporter v2.0.2",
                 listen_address=getattr(args, 'web.listen_address'),
                 metrics_path=getattr(args, 'web.telemetry_path'),
                 status_paths=status_paths,
