@@ -1,6 +1,8 @@
-# OpenVPN Exporter - Простое развертывание
+# OpenVPN Exporter - Simple Deployment
 
-## Быстрый старт
+[🇺🇸](DEPLOYMENT.md) (current) [🇷🇺](../ru/DEPLOYMENT.md)
+
+## Quick Start
 
 ### 1. Установка OpenVPN
 Используйте скрипт для установки OpenVPN:

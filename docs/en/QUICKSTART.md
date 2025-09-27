@@ -1,5 +1,7 @@
 # 🚀 Quick Start - OpenVPN Prometheus Exporter v2.0
 
+[🇺🇸](QUICKSTART.md) (current) [🇷🇺](../ru/QUICKSTART.md)
+
 ## Самый простой способ запуска
 
 ### 1. Клонируйте репозиторий

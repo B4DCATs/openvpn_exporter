@@ -1,5 +1,7 @@
 # Docker Compose Setup
 
+[🇷🇺](DOCKER_COMPOSE.md) (текущая) [🇺🇸](../en/DOCKER_COMPOSE.md)
+
 ## 🚀 Production (Production)
 
 Использует готовый образ из GitHub Container Registry:
