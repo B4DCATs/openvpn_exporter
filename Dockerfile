@@ -1,4 +1,4 @@
-# OpenVPN Prometheus Exporter v2.0 - Python Implementation
+# OpenVPN Prometheus Exporter v2.0 - Production Ready
 # Multi-stage build for security and size optimization
 
 # Build stage
@@ -10,7 +10,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# No system dependencies needed - all Python packages are pure Python
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
 # Create and set working directory
 WORKDIR /app
@@ -18,8 +22,8 @@ WORKDIR /app
 # Copy requirements first for better caching
 COPY requirements.txt .
 
-# Install Python dependencies (force wheels to avoid compilation)
-RUN pip install --no-cache-dir --only-binary=all --prefer-binary -r requirements.txt
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Production stage
 FROM python:3.11-slim as production
@@ -27,7 +31,12 @@ FROM python:3.11-slim as production
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PATH="/app/.local/bin:$PATH"
+    PATH="/app/.local/bin:$PATH" \
+    LISTEN_ADDRESS=":9176" \
+    TELEMETRY_PATH="/metrics" \
+    STATUS_PATHS="/var/log/openvpn/status.log" \
+    IGNORE_INDIVIDUALS="false" \
+    LOG_LEVEL="INFO"
 
 # Create non-root user for security
 RUN groupadd -r openvpn-exporter && \
@@ -37,6 +46,7 @@ RUN groupadd -r openvpn-exporter && \
 RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     ca-certificates \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -62,7 +72,7 @@ EXPOSE 9176
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:9176/health')" || exit 1
+    CMD curl -f http://localhost:9176/health || exit 1
 
 # Run the application
 ENTRYPOINT ["python", "openvpn_exporter.py"]

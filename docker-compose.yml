@@ -10,26 +10,21 @@ services:
       # Mount OpenVPN status files (read-only)
       - /var/log/openvpn:/var/log/openvpn:ro
       - /etc/openvpn:/etc/openvpn:ro
-      # Optional: Mount custom status files
-      - ./examples:/app/examples:ro
     environment:
       - LISTEN_ADDRESS=${LISTEN_ADDRESS:-:9176}
       - TELEMETRY_PATH=${TELEMETRY_PATH:-/metrics}
       - STATUS_PATHS=${STATUS_PATHS:-/var/log/openvpn/status.log}
       - IGNORE_INDIVIDUALS=${IGNORE_INDIVIDUALS:-false}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      - RATE_LIMIT_WINDOW=${RATE_LIMIT_WINDOW:-60}
-      - MAX_REQUESTS_PER_WINDOW=${MAX_REQUESTS_PER_WINDOW:-100}
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:9176/health')"]
+      test: ["CMD", "curl", "-f", "http://localhost:9176/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
     networks:
       - monitoring
-
 
 networks:
   monitoring:
