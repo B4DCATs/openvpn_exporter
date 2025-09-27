@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-OpenVPN Prometheus Exporter v2.0.3
+OpenVPN Prometheus Exporter v2.0.4
 Enhanced security and Python implementation with IP Access Control
 
 Security improvements:
@@ -755,6 +755,11 @@ def create_app(status_paths: List[str], ignore_individuals: bool = False, allowe
     """Create Flask application with security enhancements"""
     app = Flask(__name__)
     
+    # Disable Flask request logging for ERROR level to reduce noise
+    if logging.getLogger().level >= logging.ERROR:
+        app.logger.disabled = True
+        logging.getLogger('werkzeug').disabled = True
+    
     # Initialize exporter
     exporter = OpenVPNExporter(status_paths, ignore_individuals)
     validator = SecurityValidator()
@@ -797,7 +802,7 @@ def create_app(status_paths: List[str], ignore_individuals: bool = False, allowe
         return jsonify({
             "status": "healthy",
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "version": "2.0.3"
+            "version": "2.0.4"
         })
     
     @app.route('/')
@@ -858,8 +863,12 @@ def main():
     
     args = parser.parse_args()
     
-    # Configure logging level
-    logging.getLogger().setLevel(getattr(logging, args.log_level))
+    # Configure logging level for all loggers
+    log_level = getattr(logging, args.log_level)
+    logging.getLogger().setLevel(log_level)
+    logging.getLogger('werkzeug').setLevel(log_level)  # Flask's request logger
+    logging.getLogger('urllib3').setLevel(log_level)   # HTTP requests logger
+    structlog.get_logger().setLevel(log_level)
     
     # Parse status paths
     status_paths = [path.strip() for path in getattr(args, 'openvpn.status_paths').split(',')]
@@ -868,7 +877,7 @@ def main():
     allowed_ips_str = getattr(args, 'web.allowed_ips')
     allowed_ips = [ip.strip() for ip in allowed_ips_str.split(',') if ip.strip()] if allowed_ips_str else None
     
-    logger.info("Starting OpenVPN Exporter v2.0.3",
+    logger.info("Starting OpenVPN Exporter v2.0.4",
                 listen_address=getattr(args, 'web.listen_address'),
                 metrics_path=getattr(args, 'web.telemetry_path'),
                 status_paths=status_paths,

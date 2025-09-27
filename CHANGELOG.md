@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.4] - 2025-09-27
+
+### Fixed
+- **Logging Configuration**: Fixed LOG_LEVEL environment variable not affecting Flask request logging
+- **Noise Reduction**: Flask request logging (including healthchecks and 200 responses) now properly respects ERROR log level
+- **Logger Management**: Improved logger configuration to control all logging components (werkzeug, urllib3, structlog)
+
+### Changed
+- **Logging Behavior**: ERROR level now disables Flask request logging to reduce log noise in production
+- **Logger Scope**: Extended log level configuration to cover all Python loggers used by the application
+
 ## [2.0.3] - 2025-09-27
 
 ### Fixed
