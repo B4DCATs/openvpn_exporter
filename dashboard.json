@@ -195,6 +195,7 @@
         "x": 6,
         "y": 0
       },
+      "hideTimeOverride": true,
       "id": 12,
       "interval": null,
       "links": [],
@@ -322,7 +323,7 @@
           "unit": "dateTimeFromNow"
         },
         {
-          "alias": "Address",
+          "alias": "Real Address",
           "colorMode": null,
           "colors": [
             "rgba(245, 54, 54, 0.9)",
@@ -333,6 +334,22 @@
           "decimals": 2,
           "mappingType": 1,
           "pattern": "real_address",
+          "thresholds": [],
+          "type": "string",
+          "unit": "short"
+        },
+        {
+          "alias": "Virtual Address",
+          "colorMode": null,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "mappingType": 1,
+          "pattern": "virtual_address",
           "thresholds": [],
           "type": "string",
           "unit": "short"
@@ -388,14 +405,14 @@
       ],
       "targets": [
         {
-          "expr": "sort_desc(sum(label_replace(openvpn_server_client_received_bytes_total{common_name!=\"UNDEF\"}, \"connection_time\", \"${1}000\", \"connection_time\", \"(.*)\"))by(common_name, connection_time, real_address))",
+          "expr": "sort_desc(sum(label_replace(openvpn_server_client_received_bytes_total{common_name!=\"UNDEF\"}, \"connection_time\", \"${1}000\", \"connection_time\", \"(.*)\"))by(common_name, connection_time, real_address, virtual_address))",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
           "refId": "A"
         },
         {
-          "expr": "sum(label_replace(openvpn_server_client_sent_bytes_total{common_name!=\"UNDEF\"}, \"connection_time\", \"${1}000\", \"connection_time\", \"(.*)\"))by(common_name, connection_time, real_address)",
+          "expr": "sum(label_replace(openvpn_server_client_sent_bytes_total{common_name!=\"UNDEF\"}, \"connection_time\", \"${1}000\", \"connection_time\", \"(.*)\"))by(common_name, connection_time, real_address, virtual_address)",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
@@ -434,6 +451,7 @@
         "x": 6,
         "y": 2
       },
+      "hideTimeOverride": true,
       "id": 2,
       "interval": null,
       "links": [],
@@ -526,6 +544,7 @@
         "x": 9,
         "y": 2
       },
+      "hideTimeOverride": true,
       "id": 10,
       "interval": null,
       "links": [],
@@ -611,6 +630,7 @@
         "x": 6,
         "y": 4
       },
+      "hideTimeOverride": true,
       "id": 15,
       "interval": null,
       "links": [],
@@ -789,6 +809,7 @@
         "x": 6,
         "y": 6
       },
+      "hideTimeOverride": true,
       "id": 16,
       "interval": null,
       "links": [],
