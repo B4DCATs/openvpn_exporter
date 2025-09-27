@@ -1,28 +1,28 @@
 #!/bin/bash
 
-# OpenVPN Exporter - Простой запуск
-# Автоматически настраивает и запускает экспортер
+# OpenVPN Exporter - Simple startup
+# Automatically configures and starts the exporter
 
 set -e
 
-echo "🚀 OpenVPN Exporter - Простой запуск"
+echo "🚀 OpenVPN Exporter - Simple startup"
 
-# Проверяем права
+# Check permissions
 if [ "$EUID" -ne 0 ]; then
-    echo "❌ Запустите с правами root: sudo ./run.sh"
+    echo "❌ Run with root privileges: sudo ./run.sh"
     exit 1
 fi
 
-# Быстрая настройка прав на файл статуса
-echo "🔧 Настройка прав доступа..."
+# Quick setup of status file permissions
+echo "🔧 Setting up permissions..."
 if [ -f "/var/log/openvpn/status.log" ]; then
     chmod 644 /var/log/openvpn/status.log 2>/dev/null || true
 fi
 
-# Запуск экспортера
-echo "🐳 Запуск OpenVPN Exporter..."
+# Start exporter
+echo "🐳 Starting OpenVPN Exporter..."
 docker-compose up -d
 
-echo "✅ Готово! Экспортер запущен на http://localhost:9176"
-echo "📊 Метрики: http://localhost:9176/metrics"
-echo "🛑 Остановка: docker-compose down"
+echo "✅ Done! Exporter is running at http://localhost:9176"
+echo "📊 Metrics: http://localhost:9176/metrics"
+echo "🛑 Stop: docker-compose down"

@@ -1,126 +1,126 @@
 #!/bin/bash
 
-# OpenVPN Exporter - Автоматическая настройка и запуск
-# Этот скрипт настраивает все необходимое для работы экспортера
+# OpenVPN Exporter - Automatic setup and deployment
+# This script configures everything needed for the exporter to work
 
 set -e
 
-echo "🚀 OpenVPN Exporter - Автоматическая настройка"
+echo "🚀 OpenVPN Exporter - Automatic setup"
 
-# Проверяем, что мы root или имеем sudo
+# Check if we are root or have sudo
 if [ "$EUID" -ne 0 ]; then
-    echo "❌ Этот скрипт должен запускаться с правами root или через sudo"
-    echo "Использование: sudo ./setup.sh"
+    echo "❌ This script must be run with root privileges or through sudo"
+    echo "Usage: sudo ./setup.sh"
     exit 1
 fi
 
-echo "📋 Проверка системы..."
+echo "📋 System check..."
 
-# Проверяем Docker
+# Check Docker
 if ! command -v docker &> /dev/null; then
-    echo "❌ Docker не установлен. Установите Docker и попробуйте снова."
+    echo "❌ Docker is not installed. Install Docker and try again."
     exit 1
 fi
 
-# Проверяем Docker Compose
+# Check Docker Compose
 if ! command -v docker-compose &> /dev/null; then
-    echo "❌ Docker Compose не установлен. Установите Docker Compose и попробуйте снова."
+    echo "❌ Docker Compose is not installed. Install Docker Compose and try again."
     exit 1
 fi
 
-echo "✅ Docker и Docker Compose найдены"
+echo "✅ Docker and Docker Compose found"
 
-# Проверяем OpenVPN
+# Check OpenVPN
 if ! systemctl is-active --quiet openvpn@server; then
-    echo "⚠️  OpenVPN сервер не запущен. Запускаем..."
+    echo "⚠️  OpenVPN server is not running. Starting..."
     systemctl start openvpn@server
     sleep 2
 fi
 
-echo "✅ OpenVPN сервер активен"
+echo "✅ OpenVPN server is active"
 
-# Создаем директории если не существуют
-echo "📁 Создание необходимых директорий..."
+# Create directories if they don't exist
+echo "📁 Creating necessary directories..."
 mkdir -p /var/log/openvpn
 mkdir -p /etc/openvpn
 
-# Настраиваем права на файл статуса
-echo "🔧 Настройка прав доступа..."
+# Setup status file permissions
+echo "🔧 Setting up permissions..."
 
-# Проверяем, существует ли файл статуса
+# Check if status file exists
 if [ -f "/var/log/openvpn/status.log" ]; then
-    echo "📄 Файл статуса найден, настраиваем права..."
+    echo "📄 Status file found, setting up permissions..."
     chmod 644 /var/log/openvpn/status.log
     chown root:root /var/log/openvpn/status.log
 else
-    echo "⚠️  Файл статуса не найден, создаем пустой..."
+    echo "⚠️  Status file not found, creating empty one..."
     touch /var/log/openvpn/status.log
     chmod 644 /var/log/openvpn/status.log
     chown root:root /var/log/openvpn/status.log
 fi
 
-# Настраиваем OpenVPN для создания файла статуса с правильными правами
-echo "⚙️  Настройка OpenVPN..."
+# Configure OpenVPN to create status file with correct permissions
+echo "⚙️  Configuring OpenVPN..."
 
-# Проверяем конфигурацию OpenVPN
+# Check OpenVPN configuration
 if [ -f "/etc/openvpn/server.conf" ]; then
-    # Добавляем настройки статуса если их нет
+    # Add status settings if they don't exist
     if ! grep -q "status /var/log/openvpn/status.log" /etc/openvpn/server.conf; then
-        echo "📝 Добавление настроек статуса в OpenVPN..."
+        echo "📝 Adding status settings to OpenVPN..."
         echo "" >> /etc/openvpn/server.conf
         echo "# OpenVPN Exporter settings" >> /etc/openvpn/server.conf
         echo "status /var/log/openvpn/status.log 10" >> /etc/openvpn/server.conf
         echo "status-version 2" >> /etc/openvpn/server.conf
     fi
     
-    # Перезапускаем OpenVPN для применения настроек
-    echo "🔄 Перезапуск OpenVPN..."
+    # Restart OpenVPN to apply settings
+    echo "🔄 Restarting OpenVPN..."
     systemctl restart openvpn@server
     sleep 3
 fi
 
-# Проверяем, что файл статуса создался
+# Check if status file was created
 if [ -f "/var/log/openvpn/status.log" ]; then
-    echo "✅ Файл статуса создан и настроен"
+    echo "✅ Status file created and configured"
     chmod 644 /var/log/openvpn/status.log
 else
-    echo "⚠️  Файл статуса не создался, но продолжаем..."
+    echo "⚠️  Status file was not created, but continuing..."
 fi
 
-# Останавливаем старые контейнеры если есть
-echo "🧹 Очистка старых контейнеров..."
+# Stop old containers if any
+echo "🧹 Cleaning up old containers..."
 docker-compose down 2>/dev/null || true
 
-# Запускаем экспортер
-echo "🐳 Запуск OpenVPN Exporter..."
+# Start exporter
+echo "🐳 Starting OpenVPN Exporter..."
 docker-compose up -d
 
-# Ждем запуска
-echo "⏳ Ожидание запуска экспортера..."
+# Wait for startup
+echo "⏳ Waiting for exporter to start..."
 sleep 5
 
-# Проверяем статус
-echo "🔍 Проверка статуса..."
+# Check status
+echo "🔍 Checking status..."
 
-# Проверяем, что контейнер запустился
+# Check if container started
 if docker-compose ps | grep -q "Up"; then
-    echo "✅ OpenVPN Exporter успешно запущен!"
+    echo "✅ OpenVPN Exporter started successfully!"
     
-    # Проверяем доступность метрик
+    # Check metrics availability
     if curl -s http://localhost:9176/health > /dev/null 2>&1; then
-        echo "✅ Метрики доступны по адресу: http://localhost:9176/metrics"
+        echo "✅ Metrics available at: http://localhost:9176/metrics"
         echo "✅ Health check: http://localhost:9176/health"
     else
-        echo "⚠️  Экспортер запущен, но метрики пока недоступны. Подождите несколько секунд."
+        echo "⚠️  Exporter is running, but metrics are not yet available. Wait a few seconds."
     fi
     
     echo ""
-    echo "🎉 Настройка завершена!"
-    echo "📊 Для проверки метрик выполните: curl http://localhost:9176/metrics"
-    echo "🛑 Для остановки выполните: docker-compose down"
+    echo "🎉 Setup completed!"
+    echo "📊 To check metrics run: curl http://localhost:9176/metrics"
+    echo "🛑 To stop run: docker-compose down"
     
 else
-    echo "❌ Ошибка запуска экспортера. Проверьте логи:"
+    echo "❌ Error starting exporter. Check logs:"
     echo "docker-compose logs"
     exit 1
 fi
