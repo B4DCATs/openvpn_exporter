@@ -58,7 +58,6 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy application files
 COPY openvpn_exporter.py .
-COPY examples/ examples/
 
 # Create directories for OpenVPN status files
 RUN mkdir -p /var/log/openvpn /etc/openvpn /tmp/openvpn && \
