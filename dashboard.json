@@ -158,7 +158,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "topk(6, sum(count_values(\"connection_time\", count_over_time(openvpn_server_client_received_bytes_total{job=~\"$job\", common_name=~\"$client\"}[1d]))by(common_name))by(common_name)>1)",
+          "expr": "topk(6, sum(count_values(\"connection_time\", count_over_time(openvpn_server_client_received_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"$client\"}[1d]))by(common_name))by(common_name)>1)",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -275,7 +275,7 @@
       "tableColumn": "__name__",
       "targets": [
         {
-          "expr": "openvpn_up{job=~\"$job\"}",
+          "expr": "openvpn_up{job=~\"$job\", instance=~\"$server\"}",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -447,14 +447,14 @@
       ],
       "targets": [
         {
-          "expr": "sort_desc(sum(label_replace(openvpn_server_client_received_bytes_total{job=~\"$job\", common_name=~\"$client\"}, \"connection_time\", \"${1}000\", \"connection_time\", \"(.*)\"))by(common_name, connection_time, real_address, virtual_address))",
+          "expr": "sort_desc(sum(label_replace(openvpn_server_client_received_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"$client\"}, \"connection_time\", \"${1}000\", \"connection_time\", \"(.*)\"))by(common_name, real_address, virtual_address))",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
           "refId": "A"
         },
         {
-          "expr": "sum(label_replace(openvpn_server_client_sent_bytes_total{job=~\"$job\", common_name=~\"$client\"}, \"connection_time\", \"${1}000\", \"connection_time\", \"(.*)\"))by(common_name, connection_time, real_address, virtual_address)",
+          "expr": "sum(label_replace(openvpn_server_client_sent_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"$client\"}, \"connection_time\", \"${1}000\", \"connection_time\", \"(.*)\"))by(common_name, real_address, virtual_address)",
           "format": "table",
           "instant": true,
           "intervalFactor": 1,
@@ -532,7 +532,7 @@
       "tableColumn": "__name__",
       "targets": [
         {
-          "expr": "openvpn_openvpn_server_connected_clients{job=~\"$job\"}",
+          "expr": "openvpn_openvpn_server_connected_clients{job=~\"$job\", instance=~\"$server\"}",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -624,7 +624,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "time()-openvpn_status_update_time_seconds{job=~\"$job\"}",
+          "expr": "time()-openvpn_status_update_time_seconds{job=~\"$job\", instance=~\"$server\"}",
           "format": "time_series",
           "instant": true,
           "intervalFactor": 1,
@@ -1033,7 +1033,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "topk(6, sum(increase(openvpn_server_client_received_bytes_total{job=~\"$job\", common_name=~\"$client\"}[1d])+increase(openvpn_server_client_sent_bytes_total{job=~\"$job\", common_name=~\"$client\"}[1d]))by(common_name))",
+          "expr": "topk(6, sum(increase(openvpn_server_client_received_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"$client\"}[1d])+increase(openvpn_server_client_sent_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"$client\"}[1d]))by(common_name))",
           "format": "time_series",
           "instant": true,
           "interval": "",
@@ -1157,7 +1157,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "topk(6, sum(rate(openvpn_server_client_received_bytes_total{job=~\"$job\", common_name=~\"$client\"}[2m]))by(common_name))",
+          "expr": "topk(6, sum(rate(openvpn_server_client_received_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"$client\"}[2m]))by(common_name))",
           "format": "time_series",
           "interval": "2m",
           "intervalFactor": 1,
@@ -1165,7 +1165,7 @@
           "refId": "A"
         },
         {
-          "expr": "topk(6, sum(rate(openvpn_server_client_sent_bytes_total{job=~\"$job\", common_name=~\"$client\"}[2m]))by(common_name))",
+          "expr": "topk(6, sum(rate(openvpn_server_client_sent_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"$client\"}[2m]))by(common_name))",
           "format": "time_series",
           "interval": "2m",
           "intervalFactor": 1,
@@ -1173,7 +1173,7 @@
           "refId": "B"
         },
         {
-          "expr": "sum(bottomk(scalar(openvpn_openvpn_server_connected_clients)-6, sum(rate(openvpn_server_client_received_bytes_total{job=~\"$job\", common_name=~\"$client\"}[2m]))by(common_name)))",
+          "expr": "sum(bottomk(scalar(openvpn_openvpn_server_connected_clients)-6, sum(rate(openvpn_server_client_received_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"$client\"}[2m]))by(common_name)))",
           "format": "time_series",
           "interval": "2m",
           "intervalFactor": 1,
@@ -1181,7 +1181,7 @@
           "refId": "E"
         },
         {
-          "expr": "sum(bottomk(scalar(openvpn_openvpn_server_connected_clients)-6, sum(rate(openvpn_server_client_sent_bytes_total{job=~\"$job\", common_name=~\"$client\"}[1m]))by(common_name)))",
+          "expr": "sum(bottomk(scalar(openvpn_openvpn_server_connected_clients)-6, sum(rate(openvpn_server_client_sent_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"$client\"}[1m]))by(common_name)))",
           "format": "time_series",
           "interval": "2m",
           "intervalFactor": 1,
@@ -1265,7 +1265,7 @@
       "strokeWidth": 1,
       "targets": [
         {
-          "expr": "sort(sum(increase(openvpn_server_client_received_bytes_total{job=~\"$job\", common_name=~\"$client\"}[1d])+increase(openvpn_server_client_sent_bytes_total{job=~\"$job\", common_name=~\"$client\"}[1d]))by(common_name))",
+          "expr": "sort(sum(increase(openvpn_server_client_received_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"$client\"}[1d])+increase(openvpn_server_client_sent_bytes_total{job=~\"$job\", instance=~\"$server\", common_name=~\"$client\"}[1d]))by(common_name))",
           "format": "time_series",
           "instant": false,
           "intervalFactor": 1,
@@ -1318,7 +1318,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sum(openvpn_openvpn_server_connected_clients{job=~\"$job\"})",
+          "expr": "sum(openvpn_openvpn_server_connected_clients{job=~\"$job\", instance=~\"$server\"})",
           "format": "time_series",
           "instant": false,
           "interval": "",
@@ -1381,9 +1381,9 @@
       {
         "allValue": null,
         "current": {
-          "selected": false,
-          "text": "All",
-          "value": "$__all"
+          "selected": true,
+          "text": "openvpn-metrics",
+          "value": "openvpn-metrics"
         },
         "datasource": "${DS_PROMETHEUS}",
         "definition": "label_values(openvpn_up, job)",
@@ -1407,19 +1407,19 @@
       {
         "allValue": null,
         "current": {
-          "selected": false,
-          "text": "openvpn-metrics",
-          "value": "openvpn-metrics"
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
         },
         "datasource": "${DS_PROMETHEUS}",
-        "definition": "label_values(openvpn_up{job=\"openvpn-metrics\"}, status_path)",
+        "definition": "label_values(openvpn_up{job=~\"$job\"}, instance)",
         "hide": 0,
         "includeAll": true,
         "label": "Server",
         "multi": true,
         "name": "server",
         "options": [],
-        "query": "label_values(openvpn_up{job=\"openvpn-metrics\"}, status_path)",
+        "query": "label_values(openvpn_up{job=~\"$job\"}, instance)",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -1433,19 +1433,19 @@
       {
         "allValue": null,
         "current": {
-          "selected": false,
+          "selected": true,
           "text": "All",
           "value": "$__all"
         },
         "datasource": "${DS_PROMETHEUS}",
-        "definition": "label_values(openvpn_server_client_received_bytes_total{job=~\"$job\"}, common_name)",
+        "definition": "label_values(openvpn_server_client_received_bytes_total{job=~\"$job\", instance=~\"$server\"}, common_name)",
         "hide": 0,
         "includeAll": true,
         "label": "Client",
         "multi": true,
         "name": "client",
         "options": [],
-        "query": "label_values(openvpn_server_client_received_bytes_total{job=~\"$job\"}, common_name)",
+        "query": "label_values(openvpn_server_client_received_bytes_total{job=~\"$job\", instance=~\"$server\"}, common_name)",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
