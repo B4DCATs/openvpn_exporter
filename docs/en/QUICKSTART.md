@@ -2,22 +2,30 @@
 
 [🇺🇸](QUICKSTART.md) (current) [🇷🇺](../ru/QUICKSTART.md)
 
-## Самый простой способ запуска
+## Super Simple Setup
 
-### 1. Клонируйте репозиторий
+### 🚀 One-command setup:
+```bash
+# Clone and run in one command
+git clone https://github.com/B4DCATs/openvpn_exporter.git && cd openvpn_exporter && sudo ./run.sh
+```
+
+### Or step by step:
+
+### 1. Clone repository
 ```bash
 git clone https://github.com/B4DCATs/openvpn_exporter.git
 cd openvpn_exporter
 ```
 
-### 2. Запустите одной командой
+### 2. Run exporter
 ```bash
-./run.sh
+sudo ./run.sh
 ```
 
-**Всё!** Экспортер запущен и готов к работе.
+**Done!** Exporter is running and ready to use.
 
-## Или используйте готовый образ
+## Or use pre-built image
 
 Если не хотите собирать образ самостоятельно:
 

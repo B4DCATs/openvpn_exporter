@@ -36,12 +36,19 @@ This repository provides a secure Prometheus metrics exporter for [OpenVPN](http
 
 ## 🚀 Quick Start
 
-**Хотите запустить за 30 секунд?** Смотрите [QUICKSTART.md](QUICKSTART.md)
+**Want to get started in 30 seconds?** See [QUICKSTART.md](QUICKSTART.md)
 
+### Super Simple Setup (1 command):
+```bash
+# Clone and run in one command
+git clone https://github.com/B4DCATs/openvpn_exporter.git && cd openvpn_exporter && sudo ./run.sh
+```
+
+### Or step by step:
 ```bash
 git clone https://github.com/B4DCATs/openvpn_exporter.git
 cd openvpn_exporter
-./run.sh
+sudo ./run.sh
 ```
 
 ## 📋 Supported OpenVPN Status Formats

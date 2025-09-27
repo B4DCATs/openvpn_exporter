@@ -26,6 +26,8 @@ services:
       start_period: 10s
     networks:
       - monitoring
+    # Автоматическая настройка прав при запуске
+    init: true
 
 networks:
   monitoring:
