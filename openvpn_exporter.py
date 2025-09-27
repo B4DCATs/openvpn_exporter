@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-OpenVPN Prometheus Exporter v2.0.2
+OpenVPN Prometheus Exporter v2.0.3
 Enhanced security and Python implementation with IP Access Control
 
 Security improvements:
@@ -797,7 +797,7 @@ def create_app(status_paths: List[str], ignore_individuals: bool = False, allowe
         return jsonify({
             "status": "healthy",
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "version": "2.0.2"
+            "version": "2.0.3"
         })
     
     @app.route('/')
@@ -868,7 +868,7 @@ def main():
     allowed_ips_str = getattr(args, 'web.allowed_ips')
     allowed_ips = [ip.strip() for ip in allowed_ips_str.split(',') if ip.strip()] if allowed_ips_str else None
     
-    logger.info("Starting OpenVPN Exporter v2.0.2",
+    logger.info("Starting OpenVPN Exporter v2.0.3",
                 listen_address=getattr(args, 'web.listen_address'),
                 metrics_path=getattr(args, 'web.telemetry_path'),
                 status_paths=status_paths,

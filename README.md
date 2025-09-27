@@ -1,4 +1,4 @@
-# OpenVPN Prometheus Exporter v2.0.2
+# OpenVPN Prometheus Exporter v2.0.3
 
 [![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)](https://github.com/B4DCATs/openvpn_exporter/pkgs/container/openvpn_exporter)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
