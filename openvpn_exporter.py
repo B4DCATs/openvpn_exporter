@@ -750,7 +750,7 @@ class OpenVPNExporter:
         self.collect_metrics()
         return generate_latest(self.parser.registry)
 
-def create_app(status_paths: List[str], ignore_individuals: bool = False) -> Flask:
+def create_app(status_paths: List[str], ignore_individuals: bool = False, allowed_ips: Optional[List[str]] = None) -> Flask:
     """Create Flask application with security enhancements"""
     app = Flask(__name__)
     
@@ -758,15 +758,28 @@ def create_app(status_paths: List[str], ignore_individuals: bool = False) -> Fla
     exporter = OpenVPNExporter(status_paths, ignore_individuals)
     validator = SecurityValidator()
     
+    def get_client_ip() -> str:
+        """Get real client IP address"""
+        return request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
+    
+    def check_ip_access():
+        """Check if client IP is allowed"""
+        if allowed_ips:
+            client_ip = get_client_ip()
+            if client_ip not in allowed_ips:
+                logger.warning("Access denied", client_ip=client_ip, allowed_ips=allowed_ips)
+                abort(403)
+    
     def rate_limit_check():
         """Check rate limiting"""
-        client_ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.remote_addr)
+        client_ip = get_client_ip()
         if not validator.check_rate_limit(client_ip):
             abort(429)
     
     @app.route('/metrics')
     def metrics():
         """Prometheus metrics endpoint"""
+        check_ip_access()
         rate_limit_check()
         
         try:
@@ -779,6 +792,7 @@ def create_app(status_paths: List[str], ignore_individuals: bool = False) -> Fla
     @app.route('/health')
     def health():
         """Health check endpoint"""
+        # Health check is usually allowed from anywhere for monitoring
         return jsonify({
             "status": "healthy",
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -833,6 +847,9 @@ def main():
                        action='store_true',
                        default=os.environ.get('IGNORE_INDIVIDUALS', 'false').lower() == 'true',
                        help='If ignoring metrics for individuals')
+    parser.add_argument('--web.allowed-ips', 
+                       default=os.environ.get('ALLOWED_IPS', ''),
+                       help='Comma-separated list of allowed IP addresses for metrics access')
     parser.add_argument('--log-level', 
                        default=os.environ.get('LOG_LEVEL', 'INFO'),
                        choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
@@ -846,14 +863,19 @@ def main():
     # Parse status paths
     status_paths = [path.strip() for path in getattr(args, 'openvpn.status_paths').split(',')]
     
+    # Parse allowed IPs
+    allowed_ips_str = getattr(args, 'web.allowed_ips')
+    allowed_ips = [ip.strip() for ip in allowed_ips_str.split(',') if ip.strip()] if allowed_ips_str else None
+    
     logger.info("Starting OpenVPN Exporter v2.0",
                 listen_address=getattr(args, 'web.listen_address'),
                 metrics_path=getattr(args, 'web.telemetry_path'),
                 status_paths=status_paths,
-                ignore_individuals=getattr(args, 'ignore.individuals'))
+                ignore_individuals=getattr(args, 'ignore.individuals'),
+                allowed_ips=allowed_ips)
     
     # Create Flask app
-    app = create_app(status_paths, getattr(args, 'ignore.individuals'))
+    app = create_app(status_paths, getattr(args, 'ignore.individuals'), allowed_ips)
     
     # Start server
     host, port = getattr(args, 'web.listen_address').split(':')

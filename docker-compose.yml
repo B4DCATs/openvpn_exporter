@@ -17,6 +17,7 @@ services:
       - STATUS_PATHS=${STATUS_PATHS:-/var/log/openvpn/server.status}
       - IGNORE_INDIVIDUALS=${IGNORE_INDIVIDUALS:-false}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - ALLOWED_IPS=${ALLOWED_IPS:-}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9176/health"]
       interval: 30s
