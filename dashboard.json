@@ -76,6 +76,48 @@
   ],
   "panels": [
     {
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 2,
+        "w": 3,
+        "x": 0,
+        "y": 0
+      },
+      "id": 100,
+      "links": [
+        {
+          "icon": "external link",
+          "title": "GitHub Repository",
+          "url": "https://github.com/B4DCATs/openvpn_exporter",
+          "targetBlank": true
+        }
+      ],
+      "title": "GitHub",
+      "type": "text",
+      "content": "# [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/B4DCATs/openvpn_exporter)\n\n**OpenVPN Exporter**\n\nSource code and documentation"
+    },
+    {
+      "datasource": "${DS_PROMETHEUS}",
+      "gridPos": {
+        "h": 2,
+        "w": 3,
+        "x": 3,
+        "y": 0
+      },
+      "id": 101,
+      "links": [
+        {
+          "icon": "external link",
+          "title": "Discord Server",
+          "url": "https://discord.gg/VMKdhujjCW",
+          "targetBlank": true
+        }
+      ],
+      "title": "Discord",
+      "type": "text",
+      "content": "# [![Discord](https://img.shields.io/discord/1411852800241176616?style=for-the-badge&logo=discord&logoColor=white&label=Discord)](https://discord.gg/VMKdhujjCW)\n\n**Community Support**\n\nJoin our Discord server for help and discussions"
+    },
+    {
       "aliasColors": {},
       "bars": true,
       "dashLength": 10,
@@ -449,7 +491,7 @@
         "h": 2,
         "w": 3,
         "x": 6,
-        "y": 2
+        "y": 0
       },
       "hideTimeOverride": true,
       "id": 2,
@@ -542,7 +584,7 @@
         "h": 2,
         "w": 4,
         "x": 9,
-        "y": 2
+        "y": 0
       },
       "hideTimeOverride": true,
       "id": 10,
@@ -628,7 +670,7 @@
         "h": 2,
         "w": 3,
         "x": 6,
-        "y": 4
+        "y": 0
       },
       "hideTimeOverride": true,
       "id": 15,
@@ -721,7 +763,7 @@
         "h": 2,
         "w": 4,
         "x": 9,
-        "y": 4
+        "y": 0
       },
       "hideTimeOverride": true,
       "id": 19,
@@ -807,7 +849,7 @@
         "h": 2,
         "w": 3,
         "x": 6,
-        "y": 6
+        "y": 0
       },
       "hideTimeOverride": true,
       "id": 16,
@@ -888,7 +930,7 @@
         "h": 2,
         "w": 4,
         "x": 9,
-        "y": 6
+        "y": 0
       },
       "hideTimeOverride": true,
       "id": 18,
@@ -961,7 +1003,7 @@
         "h": 7,
         "w": 6,
         "x": 0,
-        "y": 7
+        "y": 9
       },
       "id": 22,
       "legend": {
@@ -1057,7 +1099,7 @@
         "h": 7,
         "w": 7,
         "x": 6,
-        "y": 8
+        "y": 0
       },
       "id": 6,
       "interval": "1m",
@@ -1204,7 +1246,7 @@
         "h": 7,
         "w": 6,
         "x": 0,
-        "y": 14
+        "y": 16
       },
       "id": 8,
       "interval": null,
@@ -1250,7 +1292,7 @@
         "h": 6,
         "w": 7,
         "x": 6,
-        "y": 15
+        "y": 17
       },
       "id": 14,
       "legend": {
@@ -1367,7 +1409,7 @@
     ]
   },
   "timezone": "",
-  "title": "1  OpenVPN Server",
+  "title": "OpenVPN Server",
   "uid": "_1DM17HWk",
   "version": 1,
   "description": "OpenVPN Server status using Prometheus and OpenVPN exporter "
