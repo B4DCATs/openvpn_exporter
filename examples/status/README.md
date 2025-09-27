@@ -79,9 +79,25 @@ To enable status file generation in OpenVPN, add to your server configuration:
 
 ```
 # Status file (updated every 30 seconds)
-status /var/log/openvpn/server.status 30
+status /var/log/openvpn/status.log 30
 
-# Or for client statistics
-status-version 2
-status /var/log/openvpn/client.status 30
+# Alternative names commonly used:
+# status /var/log/openvpn/server.status 30
+# status /var/log/openvpn/openvpn-status.log 30
+# status /var/log/openvpn/client.status 30
+```
+
+### Common Status File Names
+
+Different OpenVPN installations may use different names for status files:
+- `/var/log/openvpn/status.log` (most common)
+- `/var/log/openvpn/server.status`
+- `/var/log/openvpn/openvpn-status.log`
+- `/var/log/openvpn/client.status`
+
+Check your OpenVPN configuration or logs to find the correct path:
+```bash
+# Find OpenVPN status files
+find /var/log -name "*openvpn*" -type f
+find /var/log -name "*status*" -type f | grep -i openvpn
 ```

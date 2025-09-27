@@ -100,7 +100,7 @@ services:
       - /var/log/openvpn:/var/log/openvpn:ro
       - /etc/openvpn:/etc/openvpn:ro
     environment:
-      - STATUS_PATHS=/var/log/openvpn/server.status
+      - STATUS_PATHS=/var/log/openvpn/status.log
       - LOG_LEVEL=INFO
       # 🔒 SECURITY: Restrict metrics access to specific IPs
       - ALLOWED_IPS=192.168.1.100,10.0.0.50
@@ -243,7 +243,7 @@ services:
       - /var/log/openvpn:/var/log/openvpn:ro
       - /etc/openvpn:/etc/openvpn:ro
     environment:
-      - STATUS_PATHS=/var/log/openvpn/server.status
+      - STATUS_PATHS=/var/log/openvpn/status.log
       - LOG_LEVEL=INFO
       - ALLOWED_IPS=prometheus,grafana
     networks:
@@ -357,6 +357,18 @@ The exporter supports all OpenVPN status file formats:
 - **Client statistics** (OpenVPN STATISTICS format)
 - **Server statistics v2** (comma-delimited)
 - **Server statistics v3** (tab-delimited)
+
+### Common Status File Locations
+
+Different OpenVPN installations use different file names:
+- `/var/log/openvpn/status.log` (most common)
+- `/var/log/openvpn/server.status`
+- `/var/log/openvpn/openvpn-status.log`
+
+**Find your status file:**
+```bash
+find /var/log -name "*openvpn*" -type f
+```
 
 ## Exposed metrics example
 
