@@ -356,10 +356,31 @@ class OpenVPNStatusParser:
         return self._parse_server_status(lines, status_path, '\t')
     
     def _parse_server_status(self, lines: List[str], status_path: str, separator: str) -> Dict[str, Any]:
-        """Parse server status file"""
+        """Parse server status file using HEADER to determine column indices"""
         headers = {}
+        column_indices = {}  # Store column name -> index mapping for CLIENT_LIST and ROUTING_TABLE
         connected_clients = 0
         
+        # First pass: collect headers and build column index maps
+        for line in lines:
+            if not line.strip():
+                continue
+                
+            fields = line.split(separator)
+            
+            if fields[0] == 'HEADER' and len(fields) > 2:
+                header_type = fields[1]
+                header_columns = fields[2:]
+                headers[header_type] = header_columns
+                
+                # Build column index map for this header type
+                column_indices[header_type] = {}
+                for idx, col_name in enumerate(header_columns):
+                    # Normalize column name (case-insensitive, handle variations)
+                    col_name_lower = col_name.lower().strip()
+                    column_indices[header_type][col_name_lower] = idx
+        
+        # Second pass: parse data using column indices
         for line in lines:
             if not line.strip():
                 continue
@@ -373,92 +394,189 @@ class OpenVPNStatusParser:
                 except ValueError:
                     logger.warning("Invalid timestamp", path=status_path, timestamp=fields[2])
             
-            elif fields[0] == 'HEADER' and len(fields) > 2:
-                headers[fields[1]] = fields[2:]
-            
             elif fields[0] == 'CLIENT_LIST' and len(fields) > 1:
                 connected_clients += 1
                 
-                if not self.ignore_individuals and len(fields) >= 9:
-                    # Sanitize inputs
-                    common_name = self.validator.sanitize_filename(fields[1])
-                    real_address = fields[2] if self.validator.validate_ip_address(fields[2].split(':')[0]) else 'unknown'
-                    
-                    # Detect IPv6 support: check if fields[4] is an IPv6 address
-                    # Format: CLIENT_LIST,common_name,real_address,virtual_ipv4,virtual_ipv6,received_bytes,sent_bytes,...
-                    virtual_address_ipv4 = fields[3] if len(fields) > 3 and self.validator.validate_ip_address(fields[3]) else 'unknown'
-                    virtual_address_ipv6 = None
-                    received_bytes_idx = 4
-                    sent_bytes_idx = 5
-                    username_idx = 8
-                    
-                    # Check if fields[4] is an IPv6 address (contains colons and is not a number)
-                    # Format with IPv6: CLIENT_LIST,common_name,real_address,virtual_ipv4,virtual_ipv6,received_bytes,sent_bytes,...
-                    # Format without IPv6: CLIENT_LIST,common_name,real_address,virtual_ipv4,received_bytes,sent_bytes,...
-                    if len(fields) > 4:
-                        try:
-                            # Try to convert to float - if it fails, it might be IPv6
-                            float(fields[4])
-                            # It's a number, so no IPv6 address - use standard indices
-                        except (ValueError, IndexError):
-                            # Not a number, check if it's a valid IPv6 address
-                            if ':' in fields[4] and self.validator.validate_ip_address(fields[4]):
-                                virtual_address_ipv6 = fields[4]
-                                received_bytes_idx = 5
-                                sent_bytes_idx = 6
-                                username_idx = 9
-                            # If it's not IPv6 and not a number, we'll try to use standard indices
-                            # and let the exception handler catch any errors
-                    
-                    # Combine IPv4 and IPv6 addresses for virtual_address label
-                    if virtual_address_ipv6:
-                        virtual_address = f"{virtual_address_ipv4}/{virtual_address_ipv6}"
-                    else:
-                        virtual_address = virtual_address_ipv4 if virtual_address_ipv4 != 'unknown' else 'unknown'
-                    
-                    username = self.validator.sanitize_filename(fields[username_idx]) if len(fields) > username_idx else 'unknown'
-                    
-                    try:
-                        received_bytes = float(fields[received_bytes_idx])
-                        sent_bytes = float(fields[sent_bytes_idx])
-                        
-                        self.openvpn_client_received_bytes.labels(
-                            status_path=status_path,
-                            common_name=common_name,
-                            real_address=real_address,
-                            virtual_address=virtual_address,
-                            username=username,
-                            job="openvpn-metrics"
-                        ).inc(received_bytes)
-                        
-                        self.openvpn_client_sent_bytes.labels(
-                            status_path=status_path,
-                            common_name=common_name,
-                            real_address=real_address,
-                            virtual_address=virtual_address,
-                            username=username,
-                            job="openvpn-metrics"
-                        ).inc(sent_bytes)
-                    except (ValueError, IndexError) as e:
-                        logger.warning("Error parsing client data", error=str(e))
-            
-            elif fields[0] == 'ROUTING_TABLE' and len(fields) >= 6:
                 if not self.ignore_individuals:
-                    common_name = self.validator.sanitize_filename(fields[1])
-                    real_address = fields[2] if self.validator.validate_ip_address(fields[2].split(':')[0]) else 'unknown'
-                    virtual_address = fields[0] if self.validator.validate_ip_address(fields[0]) else 'unknown'
-                    
                     try:
-                        last_ref_time = float(fields[5])
-                        self.openvpn_route_last_reference_time.labels(
-                            status_path=status_path,
-                            common_name=common_name,
-                            real_address=real_address,
-                            virtual_address=virtual_address,
-                            job="openvpn-metrics"
-                        ).set(last_ref_time)
-                    except (ValueError, IndexError) as e:
-                        logger.warning("Error parsing routing data", error=str(e))
+                        # Get column indices from header
+                        client_indices = column_indices.get('CLIENT_LIST', {})
+                        
+                        # Helper function to get field by column name
+                        def get_field(col_name, default='unknown'):
+                            # If we have column indices from header, use them
+                            if client_indices:
+                                col_variations = [
+                                    col_name.lower(),
+                                    col_name.lower().replace(' ', '_'),
+                                    col_name.lower().replace('_', ' '),
+                                ]
+                                for var in col_variations:
+                                    if var in client_indices:
+                                        idx = client_indices[var]
+                                        if idx + 1 < len(fields):
+                                            return fields[idx + 1]  # +1 because fields[0] is 'CLIENT_LIST'
+                            # Fallback: use positional indices for backward compatibility
+                            # Format: CLIENT_LIST,common_name,real_address,virtual_address,received_bytes,sent_bytes,...
+                            fallback_map = {
+                                'common name': 1,
+                                'real address': 2,
+                                'virtual address': 3,
+                                'bytes received': 4,
+                                'bytes sent': 5,
+                                'username': 8,
+                                'connected since (time_t)': 7,
+                            }
+                            col_lower = col_name.lower()
+                            if col_lower in fallback_map:
+                                idx = fallback_map[col_lower]
+                                if idx < len(fields):
+                                    return fields[idx]
+                            return default
+                        
+                        # Extract fields using column names
+                        common_name = self.validator.sanitize_filename(
+                            get_field('Common Name', get_field('common name', 'unknown'))
+                        )
+                        real_address_raw = get_field('Real Address', get_field('real address', 'unknown'))
+                        real_address = real_address_raw if self.validator.validate_ip_address(
+                            real_address_raw.split(':')[0]) else 'unknown'
+                        
+                        # Get virtual addresses (IPv4 and IPv6)
+                        virtual_address_ipv4 = get_field('Virtual Address', get_field('virtual address', 'unknown'))
+                        if not self.validator.validate_ip_address(virtual_address_ipv4):
+                            virtual_address_ipv4 = 'unknown'
+                        
+                        virtual_address_ipv6 = get_field('Virtual IPv6 Address', 
+                                                         get_field('virtual ipv6 address',
+                                                                   get_field('Virtual IPv6',
+                                                                            get_field('virtual ipv6', ''))))
+                        # Validate IPv6 address
+                        if virtual_address_ipv6 and virtual_address_ipv6 != 'unknown' and virtual_address_ipv6:
+                            if not self.validator.validate_ip_address(virtual_address_ipv6):
+                                virtual_address_ipv6 = None
+                        else:
+                            virtual_address_ipv6 = None
+                        
+                        # Combine IPv4 and IPv6 addresses for virtual_address label
+                        if virtual_address_ipv6:
+                            virtual_address = f"{virtual_address_ipv4}/{virtual_address_ipv6}"
+                        else:
+                            virtual_address = virtual_address_ipv4 if virtual_address_ipv4 != 'unknown' else 'unknown'
+                        
+                        # Get username
+                        username = self.validator.sanitize_filename(
+                            get_field('Username', get_field('username', 'unknown'))
+                        )
+                        
+                        # Get connection time
+                        connection_time = get_field('Connected Since (time_t)', 
+                                                    get_field('connected since (time_t)',
+                                                              get_field('Connected Since',
+                                                                       get_field('connected since', ''))))
+                        
+                        # Get bytes received and sent
+                        received_bytes_str = get_field('Bytes Received', get_field('bytes received', '0'))
+                        sent_bytes_str = get_field('Bytes Sent', get_field('bytes sent', '0'))
+                        
+                        try:
+                            received_bytes = float(received_bytes_str) if received_bytes_str else 0
+                            sent_bytes = float(sent_bytes_str) if sent_bytes_str else 0
+                            
+                            # Build labels dict - all labels must be present
+                            labels = {
+                                'status_path': status_path,
+                                'common_name': common_name,
+                                'real_address': real_address,
+                                'virtual_address': virtual_address,
+                                'username': username,
+                                'job': "openvpn-metrics",
+                                'connection_time': ''  # Default empty, will be set if available
+                            }
+                            
+                            # Add connection_time if available
+                            if connection_time and connection_time != 'unknown' and connection_time:
+                                try:
+                                    # Try to parse as timestamp
+                                    labels['connection_time'] = str(int(float(connection_time)))
+                                except (ValueError, TypeError):
+                                    labels['connection_time'] = ''
+                            
+                            self.openvpn_client_received_bytes.labels(**labels).inc(received_bytes)
+                            self.openvpn_client_sent_bytes.labels(**labels).inc(sent_bytes)
+                            
+                        except (ValueError, TypeError) as e:
+                            logger.warning("Error parsing client data", error=str(e), 
+                                         received_bytes=received_bytes_str, sent_bytes=sent_bytes_str)
+                    except (ValueError, IndexError, KeyError) as e:
+                        logger.warning("Error parsing client data", error=str(e), line=line[:100])
+            
+            elif fields[0] == 'ROUTING_TABLE' and len(fields) >= 3:
+                if not self.ignore_individuals:
+                    try:
+                        # Get column indices from header
+                        routing_indices = column_indices.get('ROUTING_TABLE', {})
+                        
+                        # Helper function to get field by column name
+                        def get_routing_field(col_name, default='unknown'):
+                            # If we have column indices from header, use them
+                            if routing_indices:
+                                col_variations = [
+                                    col_name.lower(),
+                                    col_name.lower().replace(' ', '_'),
+                                    col_name.lower().replace('_', ' '),
+                                ]
+                                for var in col_variations:
+                                    if var in routing_indices:
+                                        idx = routing_indices[var]
+                                        if idx + 1 < len(fields):
+                                            return fields[idx + 1]  # +1 because fields[0] is 'ROUTING_TABLE'
+                            # Fallback: use positional indices for backward compatibility
+                            # Format: ROUTING_TABLE,virtual_address,common_name,real_address,last_ref,last_ref (time_t)
+                            fallback_map = {
+                                'virtual address': 1,
+                                'common name': 2,
+                                'real address': 3,
+                                'last ref': 4,
+                                'last ref (time_t)': 5,
+                            }
+                            col_lower = col_name.lower()
+                            if col_lower in fallback_map:
+                                idx = fallback_map[col_lower]
+                                if idx < len(fields):
+                                    return fields[idx]
+                            return default
+                        
+                        # Extract fields using column names
+                        virtual_address = get_routing_field('Virtual Address', get_routing_field('virtual address', 'unknown'))
+                        if not self.validator.validate_ip_address(virtual_address):
+                            virtual_address = 'unknown'
+                        
+                        common_name = self.validator.sanitize_filename(
+                            get_routing_field('Common Name', get_routing_field('common name', 'unknown'))
+                        )
+                        real_address_raw = get_routing_field('Real Address', get_routing_field('real address', 'unknown'))
+                        real_address = real_address_raw if self.validator.validate_ip_address(
+                            real_address_raw.split(':')[0]) else 'unknown'
+                        
+                        last_ref_time_str = get_routing_field('Last Ref (time_t)', 
+                                                              get_routing_field('last ref (time_t)',
+                                                                                get_routing_field('Last Ref',
+                                                                                                 get_routing_field('last ref', ''))))
+                        
+                        try:
+                            last_ref_time = float(last_ref_time_str) if last_ref_time_str else time.time()
+                            self.openvpn_route_last_reference_time.labels(
+                                status_path=status_path,
+                                common_name=common_name,
+                                real_address=real_address,
+                                virtual_address=virtual_address,
+                                job="openvpn-metrics"
+                            ).set(last_ref_time)
+                        except (ValueError, TypeError) as e:
+                            logger.warning("Error parsing routing data", error=str(e), last_ref_time=last_ref_time_str)
+                    except (ValueError, IndexError, KeyError) as e:
+                        logger.warning("Error parsing routing data", error=str(e), line=line[:100])
         
         # Set connected clients count
         self.openvpn_connected_clients.labels(status_path=status_path, job="openvpn-metrics").set(connected_clients)
