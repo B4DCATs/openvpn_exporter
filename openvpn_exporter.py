@@ -383,12 +383,44 @@ class OpenVPNStatusParser:
                     # Sanitize inputs
                     common_name = self.validator.sanitize_filename(fields[1])
                     real_address = fields[2] if self.validator.validate_ip_address(fields[2].split(':')[0]) else 'unknown'
-                    virtual_address = fields[3] if self.validator.validate_ip_address(fields[3]) else 'unknown'
-                    username = self.validator.sanitize_filename(fields[8]) if len(fields) > 8 else 'unknown'
+                    
+                    # Detect IPv6 support: check if fields[4] is an IPv6 address
+                    # Format: CLIENT_LIST,common_name,real_address,virtual_ipv4,virtual_ipv6,received_bytes,sent_bytes,...
+                    virtual_address_ipv4 = fields[3] if len(fields) > 3 and self.validator.validate_ip_address(fields[3]) else 'unknown'
+                    virtual_address_ipv6 = None
+                    received_bytes_idx = 4
+                    sent_bytes_idx = 5
+                    username_idx = 8
+                    
+                    # Check if fields[4] is an IPv6 address (contains colons and is not a number)
+                    # Format with IPv6: CLIENT_LIST,common_name,real_address,virtual_ipv4,virtual_ipv6,received_bytes,sent_bytes,...
+                    # Format without IPv6: CLIENT_LIST,common_name,real_address,virtual_ipv4,received_bytes,sent_bytes,...
+                    if len(fields) > 4:
+                        try:
+                            # Try to convert to float - if it fails, it might be IPv6
+                            float(fields[4])
+                            # It's a number, so no IPv6 address - use standard indices
+                        except (ValueError, IndexError):
+                            # Not a number, check if it's a valid IPv6 address
+                            if ':' in fields[4] and self.validator.validate_ip_address(fields[4]):
+                                virtual_address_ipv6 = fields[4]
+                                received_bytes_idx = 5
+                                sent_bytes_idx = 6
+                                username_idx = 9
+                            # If it's not IPv6 and not a number, we'll try to use standard indices
+                            # and let the exception handler catch any errors
+                    
+                    # Combine IPv4 and IPv6 addresses for virtual_address label
+                    if virtual_address_ipv6:
+                        virtual_address = f"{virtual_address_ipv4}/{virtual_address_ipv6}"
+                    else:
+                        virtual_address = virtual_address_ipv4 if virtual_address_ipv4 != 'unknown' else 'unknown'
+                    
+                    username = self.validator.sanitize_filename(fields[username_idx]) if len(fields) > username_idx else 'unknown'
                     
                     try:
-                        received_bytes = float(fields[4])
-                        sent_bytes = float(fields[5])
+                        received_bytes = float(fields[received_bytes_idx])
+                        sent_bytes = float(fields[sent_bytes_idx])
                         
                         self.openvpn_client_received_bytes.labels(
                             status_path=status_path,
