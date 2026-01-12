@@ -33,6 +33,28 @@ docker compose up -d
 
 **Metrics available at:** `http://localhost:9176/metrics`
 
+### Systemd Service (Native Installation)
+
+Для установки как systemd демона (без Docker):
+
+```bash
+# Клонируйте репозиторий
+git clone https://github.com/B4DCATs/openvpn_exporter.git
+cd openvpn_exporter
+
+# Автоматическая установка
+sudo ./examples/systemd/install-systemd.sh
+
+# Настройте конфигурацию
+sudo nano /etc/openvpn-exporter/openvpn-exporter.conf
+
+# Запустите службу
+sudo systemctl start openvpn-exporter
+sudo systemctl enable openvpn-exporter
+```
+
+**Подробные инструкции:** [Systemd Installation Guide](examples/systemd/README.md)
+
 ---
 
 ## 🔒 Security Features
@@ -181,6 +203,40 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+```
+
+### Systemd Service Configuration
+
+Для systemd установки используйте файл `/etc/openvpn-exporter/openvpn-exporter.conf`:
+
+```bash
+# Server Configuration
+LISTEN_ADDRESS=:9176
+
+# OpenVPN Configuration
+STATUS_PATHS=/var/log/openvpn/status.log
+
+# Logging
+LOG_LEVEL=INFO
+
+# Security (optional)
+ALLOWED_IPS=192.168.1.100,10.0.0.50
+
+# Ignore individual client metrics
+IGNORE_INDIVIDUALS=false
+```
+
+**Управление службой:**
+```bash
+# Запуск/остановка
+sudo systemctl start openvpn-exporter
+sudo systemctl stop openvpn-exporter
+
+# Просмотр логов
+sudo journalctl -u openvpn-exporter -f
+
+# Проверка статуса
+sudo systemctl status openvpn-exporter
 ```
 
 ---

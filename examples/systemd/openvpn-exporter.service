@@ -1,0 +1,35 @@
+[Unit]
+Description=OpenVPN Prometheus Exporter
+Documentation=https://github.com/B4DCATs/openvpn_exporter
+After=network.target openvpn.service
+Wants=openvpn.service
+
+[Service]
+Type=simple
+User=openvpn-exporter
+Group=openvpn-exporter
+WorkingDirectory=/opt/openvpn-exporter
+EnvironmentFile=/etc/openvpn-exporter/openvpn-exporter.conf
+ExecStart=/usr/bin/python3 /opt/openvpn-exporter/openvpn_exporter.py \
+    --web.listen-address=${LISTEN_ADDRESS} \
+    --openvpn.status_paths=${STATUS_PATHS} \
+    --web.allowed-ips=${ALLOWED_IPS} \
+    --ignore.individuals=${IGNORE_INDIVIDUALS} \
+    --log-level=${LOG_LEVEL}
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=openvpn-exporter
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/openvpn-exporter
+ReadOnlyPaths=/var/log/openvpn /etc/openvpn
+
+[Install]
+WantedBy=multi-user.target
+

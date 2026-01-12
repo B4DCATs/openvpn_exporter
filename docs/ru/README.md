@@ -43,9 +43,33 @@ cd openvpn_exporter
 - **Статистика сервера v3** (разделенные табуляцией)
 - **Список клиентов OpenVPN** (формат OpenVPN CLIENT LIST)
 
-## 🐳 Docker
+## 🚀 Способы установки
 
-### Предварительно собранный образ (Рекомендуется)
+### Systemd Service (Нативная установка)
+
+Для установки как systemd демона (без Docker):
+
+```bash
+# Клонируйте репозиторий
+git clone https://github.com/B4DCATs/openvpn_exporter.git
+cd openvpn_exporter
+
+# Автоматическая установка
+sudo ./examples/systemd/install-systemd.sh
+
+# Настройте конфигурацию
+sudo nano /etc/openvpn-exporter/openvpn-exporter.conf
+
+# Запустите службу
+sudo systemctl start openvpn-exporter
+sudo systemctl enable openvpn-exporter
+```
+
+**Подробные инструкции:** [Systemd Installation Guide](../examples/systemd/README.md)
+
+### Docker
+
+#### Предварительно собранный образ (Рекомендуется)
 
 Используйте предварительно собранный образ из GitHub Container Registry:
 

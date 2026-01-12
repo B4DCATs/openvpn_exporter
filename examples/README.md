@@ -71,6 +71,18 @@ Complete monitoring stack including:
 - Grafana
 - Optional AlertManager (commented)
 
+### systemd/
+Systemd service installation files for native (non-Docker) deployment:
+- `openvpn-exporter.service` - Systemd unit file
+- `openvpn-exporter.conf` - Service configuration template
+- `install-systemd.sh` - Automated installation script
+- `README.md` - Detailed installation and configuration guide
+
+**Quick install:**
+```bash
+sudo ./examples/systemd/install-systemd.sh
+```
+
 ## 🔧 Customization
 
 1. **Copy the example files** to your project root or configuration directory
